@@ -1,4 +1,4 @@
-HelloHue for plex
+HelloHue for Plex and Philips Hue
 =================
 
 ##### Control your Philips Hue lights via Plex!
