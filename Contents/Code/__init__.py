@@ -64,7 +64,7 @@ def MainMenu(header=NAME, message="Hello"):
 	return oc
 
 ####################################################################################################
-# Returns object to Launch the Prismatik app
+# Item menu to signin to Hue Bridge
 ####################################################################################################
 def ConnectBridge():
 	return PopupDirectoryObject(
@@ -73,7 +73,7 @@ def ConnectBridge():
 		thumb = R('hellohue.png'),
 	)
 ####################################################################################################
-# Returns object to Launch the Prismatik app
+# Returns object to signin to Hue Bridge
 ####################################################################################################
 def ConnectBridgeCallback():
 	Log("Trying to connect")
@@ -84,7 +84,7 @@ def ConnectBridgeCallback():
 	return MainMenu(header=NAME, message=message)
 
 ####################################################################################################
-# Returns object to Launch the Prismatik app
+# Item menu to Restart the Channel
 ####################################################################################################
 def RestartHelloHue():
 	return PopupDirectoryObject(
@@ -93,7 +93,7 @@ def RestartHelloHue():
 		thumb = R('hellohue.png'),
 	)
 ####################################################################################################
-# Returns object to Launch the Prismatik app
+# Item menu to enable the Channel
 ####################################################################################################
 def EnableHelloHue():
 	return PopupDirectoryObject(
@@ -103,7 +103,7 @@ def EnableHelloHue():
 	)
 
 ####################################################################################################
-# Executes Applescript to Launch the Prismatik app
+# Return object to enable the Channel
 ####################################################################################################
 def EnableHelloHueCallback():
 	Log("Trying to enable thread")
@@ -114,7 +114,7 @@ def EnableHelloHueCallback():
 	return MainMenu(header=NAME, message='HelloHue is now enabled.')
 
 ####################################################################################################
-# Returns object to Launch the Prismatik app
+# Item menu to disable the Channel
 ####################################################################################################
 def DisableHelloHue():
 	return PopupDirectoryObject(
@@ -124,7 +124,7 @@ def DisableHelloHue():
 	)
 
 ####################################################################################################
-# Executes Applescript to Launch the Prismatik app
+# Return object to disable the Channel
 ####################################################################################################
 def DisableHelloHueCallback():
 	Log("Trying to disable thread")
@@ -134,7 +134,7 @@ def DisableHelloHueCallback():
 	return MainMenu(header=NAME, message='HelloHue is now disabled.')
 
 ####################################################################################################
-# Called by the framework every time a user changes the prefs
+# Called by the framework every time a user changes the prefs // Used to restard the Channel
 ####################################################################################################
 @route(PREFIX + '/ValidatePrefs')
 def ValidatePrefs():
