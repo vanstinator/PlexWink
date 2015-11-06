@@ -1,0 +1,47 @@
+[
+    {
+        "id": "HUE_BRIDGE_IP",
+        "label": "Philips Hue Bridge Address",
+        "type": "text",
+        "default": "192.168.0.44"
+    },
+    {
+        "id": "HUE_LIGHTS",
+        "label": "Name of the lights to trigger",
+        "type": "text",
+        "default": "LivingColors 1, LivingColors 2"
+    },
+    {
+        "id": "PLEX_USERNAME",
+        "label": "Plex.TV login",
+        "type": "text",
+        "default": "Username"
+    },
+    {
+        "id": "PLEX_PASSWORD",
+        "label": "Plex.TV password",
+        "type": "text",
+        "option": "hidden",
+        "default": "",
+        "secure": "true"
+    },
+    {
+        "id": "PLEX_ADDRESS",
+        "label": "Plex Server Address",
+        "type": "text",
+        "default": "127.0.0.1:32400"
+    },
+    {
+        "id": "PLEX_AUTHORIZED_USERS",
+        "label": "Name of the users able to trigger",
+        "type": "text",
+        "default": "username1, username2"
+    },
+    {
+        "id": "PLEX_CLIENTS",
+        "label": "Name of plex clients able to trigger",
+        "type": "text",
+        "default": "client1, client2"
+    }
+]
+
