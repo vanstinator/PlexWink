@@ -46,9 +46,9 @@ All those parameters are case sensitive and comma separated.
 
 **Use the channel:**
 
-`Disable HelloHue` pauses the channel
-`Enable HelloHue` resumes the channel
-`Restart HelloHue` takes into account your new Plex.TV login/password if you updated it in the channel settings.
+* ```Disable HelloHue``` pauses the channel
+* ```Enable HelloHue``` resumes the channel
+* ```Restart HelloHue``` takes into account your new Plex.TV login/password if you updated it in the channel settings.
 
 ### How to report a bug
 
