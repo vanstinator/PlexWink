@@ -13,13 +13,12 @@ import xml.etree.ElementTree as ElementTree
 	
 ####################################################################################################
 
-PREFIX       = "/video/Hello_Hue"
+PREFIX       = "/video/HelloHue"
 NAME         = 'HelloHue'
 ART          = 'background.png'
 ICON         = 'hellohue.png'
 PREFS_ICON   = 'hellohue.png'
 PROFILE_ICON = 'hellohue.png'
-alive = True
 
 ####################################################################################################
 
@@ -47,18 +46,52 @@ def MainMenu(header=NAME, message="Hello"):
 		oc.header = header
 		oc.message = message
 	#oc.add(LaunchPrismatikObject())
-
-	if "thread_websocket" in str(threading.enumerate()):
-		oc.add(DisableHelloHue())
-
-	if not "thread_websocket" in str(threading.enumerate()):
-		oc.add(EnableHelloHue())
+	auth = HueCheck().check_username()
+	if auth is False:
+		Log("Username not registered.")
+		oc.add(ConnectBridge())
+	if auth is True:
+		if "thread_websocket" in str(threading.enumerate()):
+			oc.add(DisableHelloHue())
+		if not "thread_websocket" in str(threading.enumerate()):
+			oc.add(EnableHelloHue())
+	
+	oc.add(RestartHelloHue())
 
 	# Add item for setting preferences	
 	oc.add(PrefsObject(title = L('Preferences'), thumb = R(PREFS_ICON)))
 
 	return oc
 
+####################################################################################################
+# Returns object to Launch the Prismatik app
+####################################################################################################
+def ConnectBridge():
+	return PopupDirectoryObject(
+		key   = Callback(ConnectBridgeCallback),
+		title = 'Press button and your bridge and click to connect',
+		thumb = R('hellohue.png'),
+	)
+####################################################################################################
+# Returns object to Launch the Prismatik app
+####################################################################################################
+def ConnectBridgeCallback():
+	Log("Trying to connect")
+	x = HueCheck().connect_to_bridge()
+	message = "Error. Have you pushed the button on your bridge?"
+	if not x == "Error":
+		message = "Connected :)"
+	return MainMenu(header=NAME, message=message)
+
+####################################################################################################
+# Returns object to Launch the Prismatik app
+####################################################################################################
+def RestartHelloHue():
+	return PopupDirectoryObject(
+		key   = Callback(ValidatePrefs),
+		title = 'Restart HelloHue (must do after changing plex.tv login/password)',
+		thumb = R('hellohue.png'),
+	)
 ####################################################################################################
 # Returns object to Launch the Prismatik app
 ####################################################################################################
@@ -74,7 +107,9 @@ def EnableHelloHue():
 ####################################################################################################
 def EnableHelloHueCallback():
 	Log("Trying to enable thread")
-	threading.Thread(target=run_websocket_lister,name='thread_websocket').start()
+	#threading.Thread(target=run_websocket_lister,name='thread_websocket').start()
+	if not "thread_websocket" in str(threading.enumerate()):
+		ValidatePrefs()
 	Log(threading.enumerate())
 	return MainMenu(header=NAME, message='HelloHue is now enabled.')
 
@@ -93,8 +128,8 @@ def DisableHelloHue():
 ####################################################################################################
 def DisableHelloHueCallback():
 	Log("Trying to disable thread")
-	alive = False
-	ws.close()
+	if "thread_websocket" in str(threading.enumerate()):
+		ws.close()
 	Log(threading.enumerate())
 	return MainMenu(header=NAME, message='HelloHue is now disabled.')
 
@@ -106,40 +141,78 @@ def ValidatePrefs():
 
 	global plex, hue
 	Log('Validating Prefs')
-	#if Prefs['RESET']:
-	#	ResetPrefs()
-	plex = Plex()
-	hue = Hue()
-	threading.Thread(target=run_websocket_lister,name='thread_websocket').start()
-	Log(threading.enumerate())
+	auth = HueCheck().check_username()
+	if auth is False:
+		Log("Hue username not registered. Can't do nothing")
+	if auth is True:
+		Log("Hue username is registered... Starting!")
+		plex = Plex()
+		hue = Hue()
+		Log("Classes initiated")
+		if "thread_websocket" in str(threading.enumerate()):
+			Log("Closing daemon...")
+			ws.close()
+		if not "thread_websocket" in str(threading.enumerate()):
+			Log("Starting daemon...")
+			threading.Thread(target=run_websocket_lister,name='thread_websocket').start()
+		Log(threading.enumerate())
+	return MainMenu(header=NAME)
 
 ####################################################################################################
 # Philips Hue Commands
 ####################################################################################################
+
+class HueCheck:
+	def __init__(self):
+		Log("Checking if username is registered")
+	def check_username(self):
+		if Prefs['HUE_USERNAME']:
+			r = requests.get('http://' + Prefs['HUE_BRIDGE_IP'] + '/api/' + Prefs['HUE_USERNAME'])
+			data = json.loads(str(r.text))
+			try:
+				e = data['lights']
+			except (ValueError, KeyError, TypeError):
+				return False
+			else:
+				return True
+	def connect_to_bridge(self):
+		if Prefs['HUE_BRIDGE_IP']:
+			Log("Trying to connect")
+			r = requests.post('http://' + Prefs['HUE_BRIDGE_IP'] + '/api/', json={"devicetype": "HelloHue"})
+			data = r.json()
+			try:
+				for x in data:
+					e = x['success']['username']
+				Log("Received username : " + e)
+				Log("Storing in preferences")
+				r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/video/HelloHue/:/prefs/set?HUE_USERNAME=' + e)
+				ValidatePrefs()
+			except (ValueError, KeyError, TypeError):
+				return "Error"
+			else:
+				return e
 
 class Hue:
 
 	def __init__(self):
 	    Log("Initializing Hue class")
 	    global B, LIGHT_GROUPS, LIGHT_GROUPS_INITIAL_STATE
-	    B = Bridge(Prefs['HUE_BRIDGE_IP'], 'newdeveloper')
-	    B.connect()
+	    B = Bridge(Prefs['HUE_BRIDGE_IP'], Prefs['HUE_USERNAME'])
+	    Log("Bridge found: " + str(B))
 
 	    Log("-Getting available lights")
 	    LIGHT_GROUPS = self.get_hue_light_groups()
-	    Log(LIGHT_GROUPS)
 
-	    Log("-Getting lights initial state")
-	    LIGHT_GROUPS_INITIAL_STATE = self.get_hue_light_initial_state()
-	    Log(LIGHT_GROUPS_INITIAL_STATE)
+	    #Log("-Getting lights initial state")
+	    #LIGHT_GROUPS_INITIAL_STATE = self.get_hue_light_initial_state()
+	    #Log(LIGHT_GROUPS_INITIAL_STATE)
 
 	def get_hue_light_groups(self):
 	    lights = B.lights
-	    Log(lights)
-	    Log(Prefs['HUE_LIGHTS'])
+	    Log("Available lights: " +str(lights))
 	    pattern = re.compile("^\s+|\s*,\s*|\s+$")
 	    configuredlights = [x for x in pattern.split(Prefs['HUE_LIGHTS']) if x]
-	    Log(configuredlights)
+	    Log("Configured lights: " + str(configuredlights))
 	    # Print light names
 	    array = []
 	    for l in lights:
@@ -149,8 +222,6 @@ class Hue:
 	    return array
 
 	def get_hue_light_initial_state(self):
-	    B = Bridge(Prefs['HUE_BRIDGE_IP'], 'newdeveloper')
-	    B.connect()
 	    array = []
 	    for light in LIGHT_GROUPS:
 	        subarray = []
@@ -161,12 +232,6 @@ class Hue:
 	    return array
 
 def update_light_state(powered, brightness):
-    #headers = {'Authorization': 'Bearer ' + ACCESS_TOKEN}
-    #state_string = {'desired_state': {'brightness': brightness, 'powered': powered}};
-    #for group_id in LIGHT_GROUPS:
-    #    print(time.strftime("%I:%M:%S") + " - changing light group %s powered state to %s and brightness state to %s" % (group_id, "ON" if powered else "OFF", "DIM" if brightness == 0 else "FULL"));
-    #    requests.post("https://winkapi.quirky.com/groups/" + group_id + "/activate", json=state_string,headers=headers);
-    #for l.name in LIGHT_GROUPS:
     Log("--Updating lights")
     command =  {'on' : powered, 'bri' : brightness}
     B.set_light(LIGHT_GROUPS, command)
@@ -181,26 +246,22 @@ class Plex:
         Log("-Getting Token")
         global HEADERS, ACCESS_TOKEN
         HEADERS = {'X-Plex-Product': 'Automating Home Lighting',
-                   'X-Plex-Version': '1.2.0',
-                   'X-Plex-Client-Identifier': 'PlexWink',
-                   'X-Plex-Device': 'PC',
-                   'X-Plex-Device-Name': 'PlexWink'}
+                   'X-Plex-Version': '1.0.1',
+                   'X-Plex-Client-Identifier': 'HelloHue',
+                   'X-Plex-Device': 'Server',
+                   'X-Plex-Device-Name': 'HelloHue'}
         ACCESS_TOKEN = self.get_plex_token()
-        Log(ACCESS_TOKEN)
-        #print("-Getting Server")
-        #PLEX_IP = self.get_plex_server()
-        #print PLEX_IP
-
-    def get_plex_server(self):
-        auth = {'user[login]': Prefs['PLEX_USERNAME'], 'user[password]': Prefs['PLEX_PASSWORD']}
-        r = requests.post('https://plex.tv/pms/servers.xml', params=auth)
-        return r
+        if not ACCESS_TOKEN == "Error":
+            Log("Token retrieved")
 
     def get_plex_token(self):
-        auth = {'user[login]': Prefs['PLEX_USERNAME'], 'user[password]': Prefs['PLEX_PASSWORD']}
-        r = requests.post('https://plex.tv/users/sign_in.json', params=auth, headers=HEADERS)
-        data = json.loads(r.text)
-        return data['user']['authentication_token']
+		auth = {'user[login]': Prefs['PLEX_USERNAME'], 'user[password]': Prefs['PLEX_PASSWORD']}
+		r = requests.post('https://plex.tv/users/sign_in.json', params=auth, headers=HEADERS)
+		data = json.loads(r.text)
+		try:
+			return data['user']['authentication_token']
+		except (ValueError, KeyError, TypeError):
+			return "Error"
 
 def get_plex_status():
     r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/status/sessions?X-Plex-Token=' + ACCESS_TOKEN, headers=HEADERS)
@@ -215,16 +276,14 @@ CURRENT_STATUS = ''
 
 def run_websocket_lister():
 	global ws
-
-	Log('Listening for playing items')
-	Log(ACCESS_TOKEN)
+	Log('Starting websocket listener')
 	websocket.enableTrace(True)
 	ws = websocket.WebSocketApp("ws://127.0.0.1:32400/:/websockets/notifications?X-Plex-Token=" + ACCESS_TOKEN,
 	                          on_message = on_message)
 	                          # on_error = on_error,
 	                          # on_close = on_close)
 	# ws.on_open = on_open
-	Log("It's running")
+	Log("Up and running, listening")
 	ws.run_forever()
 
 def is_plex_playing(plex_status):
@@ -240,12 +299,26 @@ def is_plex_playing(plex_status):
 						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS != item.find('Player').get('state'):
 							CURRENT_STATUS = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
-							turn_off_lights()
+							if Prefs['HUE_ACTION_PLAYING'] == "Turn Off":
+								turn_off_lights()
+							if Prefs['HUE_ACTION_PLAYING'] == "Turn On":
+								turn_on_lights()
+							if Prefs['HUE_ACTION_PLAYING'] == "Dim":
+								dim_lights()
+							if Prefs['HUE_ACTION_PLAYING'] == "Nothing":
+								pass
 							return False
 						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS != item.find('Player').get('state'):
 							CURRENT_STATUS = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
-							dim_lights()
+							if Prefs['HUE_ACTION_PAUSED'] == "Turn Off":
+								turn_off_lights()
+							if Prefs['HUE_ACTION_PAUSED'] == "Turn On":
+								turn_on_lights()
+							if Prefs['HUE_ACTION_PAUSED'] == "Dim":
+								dim_lights()
+							if Prefs['HUE_ACTION_PAUSED'] == "Nothing":
+								pass
 							return False
 						else:
 							return False
@@ -259,30 +332,39 @@ def is_plex_playing(plex_status):
 	CURRENT_STATUS = 'stopped'
 	print(time.strftime("%I:%M:%S") + " - Playback stopped");
 	#reset_lights()
-	turn_off_lights()
+	if Prefs['HUE_ACTION_STOPPED'] == "Turn Off":
+		turn_off_lights()
+	if Prefs['HUE_ACTION_STOPPED'] == "Turn On":
+		turn_on_lights()
+	if Prefs['HUE_ACTION_STOPPED'] == "Dim":
+		dim_lights()
+	if Prefs['HUE_ACTION_STOPPED'] == "Nothing":
+		pass
 
 
 def reset_lights():
-    Hue.reset_light_state()
-    pass
+	Log("Reseting lights")
+	Hue.reset_light_state()
+	pass
 
 def turn_off_lights():
-    update_light_state(False, 50)
-    pass
-
+	Log("Turning off lights")
+	update_light_state(False, 50)
+	pass
 
 def turn_on_lights():
-    update_light_state(True, 254)
-    pass
-
+	Log("Turning on lights")
+	update_light_state(True, 254)
+	pass
 
 def dim_lights():
-    Log("Dimming lights")
-    update_light_state(True, 100)
-    pass
+	Log("Dimming lights")
+	update_light_state(True, 100)
+	pass
 
 def on_message(ws, message):
     json_object = json.loads(message)
+    Log(json_object)
     if json_object['type'] == 'playing':
         plex_status = get_plex_status()
         # if json_object['_children'][0]['state'] == 'playing':

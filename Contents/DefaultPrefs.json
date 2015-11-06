@@ -6,10 +6,52 @@
         "default": "192.168.0.44"
     },
     {
+        "id": "HUE_USERNAME",
+        "label": "Philips Hue API username",
+        "type": "text",
+        "default": "newdeveloper"
+    },
+    {
         "id": "HUE_LIGHTS",
         "label": "Name of the lights to trigger",
         "type": "text",
         "default": "LivingColors 1, LivingColors 2"
+    },
+    {
+        "id": "HUE_ACTION_PLAYING",
+        "label": "When a media is playing:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On"
+        ],
+    "default": "Turn Off"
+    },
+    {
+        "id": "HUE_ACTION_PAUSED",
+        "label": "When a media is paused:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On"
+        ],
+    "default": "Dim"
+    },
+    {
+        "id": "HUE_ACTION_STOPPED",
+        "label": "When a media is stopped:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On"
+        ],
+    "default": "Nothing"
     },
     {
         "id": "PLEX_USERNAME",
