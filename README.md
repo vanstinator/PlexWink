@@ -9,7 +9,7 @@ This Channel is based on PlexWink by vanstinator.
 ### Behavior
 
 This channel detects when a media is playing, paused or stopped on your Plex Clients. Then it checks if it's a video, the client name, and the user who owns the stream. If it matches your criteria it triggers your lights with the actions you have set up.
-You can also turn your lights on and off inside the channel
+You can also turn your lights on and off inside the channel.
 
 ### Configuration
 
@@ -46,7 +46,7 @@ The config is pretty simple and only needs to be done once.
 
 * ```My Lights``` allows you to trigger your lights from the channel
 * ```Enable HelloHue``` disable the channel (stop listening to items being played)
-* ```Enable HelloHue``` resumes the channel (start listening to items being played)
+* ```Disable HelloHue``` resumes the channel (start listening to items being played)
 * ```Restart HelloHue``` takes into account your new Plex.TV login/password if you updated it in the channel settings.
 
 ### How to report a bug and ask for features
