@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ElementTree
 	
 ####################################################################################################
 
-PREFIX       = "/video/HelloHue"
+PREFIX       = "/applications/HelloHue"
 NAME         = 'HelloHue'
 ART          = 'background.png'
 ICON         = 'hellohue.png'
@@ -25,14 +25,11 @@ PROFILE_ICON = 'hellohue.png'
 ####################################################################################################
 # Start function
 ####################################################################################################
-def Start():
-
-	
+def Start():	
 	Log('Starting HelloHue .. Hello World!')
 	HTTP.CacheTime = 0
 	ObjectContainer.title1 = NAME
 	ObjectContainer.art = R(ART)
-	#ObjectContainer.replace_parent = True
 	ValidatePrefs()
 
 ####################################################################################################
@@ -40,28 +37,131 @@ def Start():
 ####################################################################################################
 @handler(PREFIX, NAME, art=R(ART), thumb=R(ICON))
 def MainMenu(header=NAME, message="Hello"):
-
-	oc = ObjectContainer()
+	oc = ObjectContainer(no_history=True)
 	if message is not "Hello":
 		oc.header = header
 		oc.message = message
-	#oc.add(LaunchPrismatikObject())
-	auth = HueCheck().check_username()
 	if auth is False:
-		Log("Username not registered.")
 		oc.add(ConnectBridge())
 	if auth is True:
+		oc.add(DirectoryObject(
+			key = Callback(MyLights),
+			title = 'My Lights',
+			thumb = R(PREFS_ICON)))
 		if "thread_websocket" in str(threading.enumerate()):
 			oc.add(DisableHelloHue())
 		if not "thread_websocket" in str(threading.enumerate()):
 			oc.add(EnableHelloHue())
-	
-	oc.add(RestartHelloHue())
-
+	oc.add(DirectoryObject(
+		key = Callback(AdvancedMenu),
+		title = 'Advanced Menu',
+		thumb = R(PREFS_ICON)))
 	# Add item for setting preferences	
 	oc.add(PrefsObject(title = L('Preferences'), thumb = R(PREFS_ICON)))
-
 	return oc
+
+####################################################################################################
+# Advanced Menu
+####################################################################################################
+@route(PREFIX + '/AdvancedMenu')
+def AdvancedMenu(header="AdvancedMenu", message="Hello"):
+	oc = ObjectContainer(title2 = "Advanced Menu",no_history=True, replace_parent=True)
+	if message is not "Hello":
+		oc.header = header
+		oc.message = message
+	oc.add(PopupDirectoryObject(
+		key = Callback(ResetPlexToken),
+		title = 'Reset Plex.TV token',
+		thumb = R(PREFS_ICON)))
+	oc.add(PopupDirectoryObject(
+		key = Callback(ResetHueToken),
+		title = 'Reset Hue token',
+		thumb = R(PREFS_ICON)))
+	oc.add(RestartHelloHue())
+	return oc
+####################################################################################################
+# Reset Plex Token
+####################################################################################################
+def ResetPlexToken():
+	if Dict["token"]:
+		Dict["token"] = ""
+		if Dict["token"]:
+			Log("TokenStillDetected")
+			return AdvancedMenu(header="AdvancedMenu", message="Error while deleting.")
+		else:
+			Log("Token deleted")
+			ValidatePrefs()
+			return AdvancedMenu(header="AdvancedMenu", message="Token Deleted.")
+	else:
+		Log("Plex Foiray")
+
+####################################################################################################
+# Advanced Menu
+####################################################################################################
+def ResetHueToken():
+	if Dict["HUE_USERNAME"]:
+		Dict["HUE_USERNAME"] = ""
+		if Dict["HUE_USERNAME"]:
+			Log("TokenStillDetected")
+			return AdvancedMenu(header="AdvancedMenu", message="Error while deleting.")
+		else:
+			Log("Token deleted")
+			ValidatePrefs()
+			return AdvancedMenu(header="AdvancedMenu", message="Token Deleted.")
+	else:
+		Log("Hue Foiray")
+####################################################################################################
+# Lights Menu
+####################################################################################################
+@route(PREFIX + '/MyLights')
+def MyLights(header="My Lights"):
+	oc = ObjectContainer(title2 =header,no_history=True, replace_parent=True)
+	i = 0
+	bigarray = []
+	for lights in B.lights:
+		i += 1
+		menu_text = "Turn On"
+		menu_action = True
+		if lights.on == True:
+			menu_text = "Turn Off"
+			menu_action = False
+		array = []
+		array.append(lights.name)
+		bigarray.append(lights.name)
+		Log(array)
+		oc.add(DirectoryObject(
+			key = Callback(LightAction,
+				light_id = array,
+				on = menu_action),
+			title = menu_text + " " + lights.name,
+			thumb = R(PREFS_ICON)))
+	if i == 0:
+		oc.add(PopupDirectoryObject(
+			key = Callback(MainMenu),
+			title = "No lights available",
+			thumb = R(PREFS_ICON)))
+	else:
+		oc.add(PopupDirectoryObject(
+			key = Callback(LightAction,
+				light_id = bigarray,
+				on = True),
+			title = "Turn all lights on",
+			thumb = R(PREFS_ICON)))
+		oc.add(PopupDirectoryObject(
+			key = Callback(LightAction,
+				light_id = bigarray,
+				on = False),
+			title = "Turn all lights off",
+			thumb = R(PREFS_ICON)))
+	return oc
+
+####################################################################################################
+# Lights action
+####################################################################################################
+def LightAction(light_id, on):
+	command =  {'on' : on}
+	Log(B.set_light(light_id, command))
+	return MyLights()
 
 ####################################################################################################
 # Item menu to signin to Hue Bridge
@@ -69,7 +169,7 @@ def MainMenu(header=NAME, message="Hello"):
 def ConnectBridge():
 	return PopupDirectoryObject(
 		key   = Callback(ConnectBridgeCallback),
-		title = 'Press button and your bridge and click to connect',
+		title = 'Press button on your bridge and click to connect',
 		thumb = R('hellohue.png'),
 	)
 ####################################################################################################
@@ -78,8 +178,11 @@ def ConnectBridge():
 def ConnectBridgeCallback():
 	Log("Trying to connect")
 	x = HueCheck().connect_to_bridge()
-	message = "Error. Have you pushed the button on your bridge?"
-	if not x == "Error":
+	if x == "ErrorAuth":
+		message = "Error. Have you pushed the button on your bridge?"
+	elif x == "ErrorReach":
+		message = "Error. Wrong bridge IP?"
+	else:
 		message = "Connected :)"
 	return MainMenu(header=NAME, message=message)
 
@@ -107,7 +210,7 @@ def EnableHelloHue():
 ####################################################################################################
 def EnableHelloHueCallback():
 	Log("Trying to enable thread")
-	#threading.Thread(target=run_websocket_lister,name='thread_websocket').start()
+	#threading.Thread(target=run_websocket_watcher,name='thread_websocket').start()
 	if not "thread_websocket" in str(threading.enumerate()):
 		ValidatePrefs()
 	Log(threading.enumerate())
@@ -139,11 +242,11 @@ def DisableHelloHueCallback():
 @route(PREFIX + '/ValidatePrefs')
 def ValidatePrefs():
 
-	global plex, hue
+	global auth, plex, hue
 	Log('Validating Prefs')
 	auth = HueCheck().check_username()
 	if auth is False:
-		Log("Hue username not registered. Can't do nothing")
+		Log("Please update your Hue preferences and try again")
 	if auth is True:
 		Log("Hue username is registered... Starting!")
 		plex = Plex()
@@ -154,7 +257,7 @@ def ValidatePrefs():
 			ws.close()
 		if not "thread_websocket" in str(threading.enumerate()):
 			Log("Starting daemon...")
-			threading.Thread(target=run_websocket_lister,name='thread_websocket').start()
+			threading.Thread(target=run_websocket_watcher,name='thread_websocket').start()
 		Log(threading.enumerate())
 	return MainMenu(header=NAME)
 
@@ -164,127 +267,151 @@ def ValidatePrefs():
 
 class HueCheck:
 	def __init__(self):
-		Log("Checking if username is registered")
+		Log("Checking if username is registered and if bridge if reachable")
 	def check_username(self):
-		if Prefs['HUE_USERNAME']:
-			r = requests.get('http://' + Prefs['HUE_BRIDGE_IP'] + '/api/' + Prefs['HUE_USERNAME'])
+		#Dict['HUE_USERNAME'] = "newdeveloper"
+		if Dict['HUE_USERNAME']:
+			try:
+				r = requests.get('http://' + Prefs['HUE_BRIDGE_IP'] + '/api/' + Dict['HUE_USERNAME'])
+			except requests.exceptions.RequestException as e:
+				Log("Error while connecting to bridge (wrong bridge IP/not reachable): "+str(e))
+				return False
 			data = json.loads(str(r.text))
 			try:
 				e = data['lights']
 			except (ValueError, KeyError, TypeError):
+				Log("Error while connecting to bridge (wrong username).")
 				return False
 			else:
 				return True
+		else:
+			return False
 	def connect_to_bridge(self):
 		if Prefs['HUE_BRIDGE_IP']:
 			Log("Trying to connect")
-			r = requests.post('http://' + Prefs['HUE_BRIDGE_IP'] + '/api/', json={"devicetype": "HelloHue"})
+			try:
+				r = requests.post('http://' + Prefs['HUE_BRIDGE_IP'] + '/api/', json={"devicetype": "HelloHue"})
+			except requests.exceptions.RequestException as e:
+				Log("Error while connecting to bridge (wrong bridge IP/not reachable): "+str(e))
+				return "ErrorReach"
 			data = r.json()
 			try:
 				for x in data:
 					e = x['success']['username']
 				Log("Received username : " + e)
-				Log("Storing in preferences")
-				r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/video/HelloHue/:/prefs/set?HUE_USERNAME=' + e)
+				Log("Storing in dict")
+				Dict['HUE_USERNAME'] = e
 				ValidatePrefs()
 			except (ValueError, KeyError, TypeError):
-				return "Error"
-			else:
-				return e
+				return "ErrorAuth"
+		else:
+			return e
 
 class Hue:
-
 	def __init__(self):
-	    Log("Initializing Hue class")
-	    global B, LIGHT_GROUPS, LIGHT_GROUPS_INITIAL_STATE
-	    B = Bridge(Prefs['HUE_BRIDGE_IP'], Prefs['HUE_USERNAME'])
-	    Log("Bridge found: " + str(B))
+		Log("Initializing Hue class")
+		global B, LIGHT_GROUPS
+		B = Bridge(Prefs['HUE_BRIDGE_IP'], Dict['HUE_USERNAME'])
+		Log("Bridge found: " + str(B))
 
-	    Log("-Getting available lights")
-	    LIGHT_GROUPS = self.get_hue_light_groups()
-
-	    #Log("-Getting lights initial state")
-	    #LIGHT_GROUPS_INITIAL_STATE = self.get_hue_light_initial_state()
-	    #Log(LIGHT_GROUPS_INITIAL_STATE)
+		Log("-Getting available lights")
+		LIGHT_GROUPS = self.get_hue_light_groups()
 
 	def get_hue_light_groups(self):
-	    lights = B.lights
-	    Log("Available lights: " +str(lights))
-	    pattern = re.compile("^\s+|\s*,\s*|\s+$")
-	    configuredlights = [x for x in pattern.split(Prefs['HUE_LIGHTS']) if x]
-	    Log("Configured lights: " + str(configuredlights))
-	    # Print light names
-	    array = []
-	    for l in lights:
-	        for local_group in configuredlights:
-	            if l.name == local_group:
-	                array.append(l.name)
-	    return array
+		lights = B.lights
+		Log("Available lights: " +str(lights))
+		pattern = re.compile("^\s+|\s*,\s*|\s+$")
+		configuredlights = [x for x in pattern.split(Prefs['HUE_LIGHTS']) if x]
+		Log("Configured lights: " + str(configuredlights))
+		array = []
+		for l in lights:
+			for local_group in configuredlights:
+				if l.name == local_group:
+					array.append(l.name)
+		return array
 
 	def get_hue_light_initial_state(self):
-	    array = []
-	    for light in LIGHT_GROUPS:
-	        subarray = []
-	        subarray.append(light)
-	        subarray.append(B.get_light(light, 'on'))
-	        subarray.append(B.get_light(light, 'bri'))
-	        array.append(subarray)
-	    return array
+		global LIGHT_GROUPS_INITIAL_STATE
+		dico = {}
+		for light in LIGHT_GROUPS:
+			line = {}
+			line['on'] = B.get_light(light, 'on')
+			line['bri'] = B.get_light(light, 'bri')
+			dico[light] = line
+		LIGHT_GROUPS_INITIAL_STATE = dico
+		return dico
 
-def update_light_state(powered, brightness):
-    Log("--Updating lights")
-    command =  {'on' : powered, 'bri' : brightness}
-    B.set_light(LIGHT_GROUPS, command)
+	def update_light_state(self, powered, brightness=254):
+		Log("--Updating lights")
+		command =  {'on' : powered, 'bri' : brightness}
+		if powered is False:
+			command =  {'on' : powered}
+		B.set_light(LIGHT_GROUPS, command)
+
+	def reset_lights_state(self):
+		Log("--Reset lights")
+		lights = LIGHT_GROUPS_INITIAL_STATE
+		for light in lights:
+			command = {'on': lights[light]['on'], 'bri': lights[light]['bri']}
+			B.set_light(light, command)
 
 ####################################################################################################
 # Plex Commands
 ####################################################################################################
 
 class Plex:
-    def __init__(self):
-        Log("Initializing Plex class")
-        Log("-Getting Token")
-        global HEADERS, ACCESS_TOKEN
-        HEADERS = {'X-Plex-Product': 'Automating Home Lighting',
-                   'X-Plex-Version': '1.0.1',
-                   'X-Plex-Client-Identifier': 'HelloHue',
-                   'X-Plex-Device': 'Server',
-                   'X-Plex-Device-Name': 'HelloHue'}
-        ACCESS_TOKEN = self.get_plex_token()
-        if not ACCESS_TOKEN == "Error":
-            Log("Token retrieved")
+	def __init__(self):
+		Log("Initializing Plex class")
+		Log("-Getting Token")
+		global HEADERS, ACCESS_TOKEN
+		HEADERS = {'X-Plex-Product': 'Automating Home Lighting', 
+		'X-Plex-Version': '1.0.1',
+		'X-Plex-Client-Identifier': 'HelloHue',
+		'X-Plex-Device': 'Server',
+		'X-Plex-Device-Name': 'HelloHue'}
+		if Dict["token"] == "Error" or not Dict["token"]:
+			TOKEN = self.get_plex_token()
+			ACCESS_TOKEN = TOKEN
+		else:
+			Log("Token retrieved from Dict")
+			ACCESS_TOKEN = Dict["token"]
 
-    def get_plex_token(self):
-		auth = {'user[login]': Prefs['PLEX_USERNAME'], 'user[password]': Prefs['PLEX_PASSWORD']}
-		r = requests.post('https://plex.tv/users/sign_in.json', params=auth, headers=HEADERS)
+	def get_plex_token(self):
+		plexauth = {'user[login]': Prefs['PLEX_USERNAME'], 'user[password]': Prefs['PLEX_PASSWORD']}
+		r = requests.post('https://plex.tv/users/sign_in.json', params=plexauth, headers=HEADERS)
 		data = json.loads(r.text)
 		try:
-			return data['user']['authentication_token']
+			Dict["token"] = data['user']['authentication_token']
+			Log("Token retrieved and saved")
+			return Dict["token"]
 		except (ValueError, KeyError, TypeError):
-			return "Error"
+			Log("Error while retrieving token")
+			Dict["token"] = "Error"
+			return Dict["token"]
 
-def get_plex_status():
-    r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/status/sessions?X-Plex-Token=' + ACCESS_TOKEN, headers=HEADERS)
-    e = ElementTree.fromstring(r.text.encode('utf-8'))
-    return e
+	def get_plex_status(self):
+		r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/status/sessions?X-Plex-Token=' + ACCESS_TOKEN, headers=HEADERS)
+		e = ElementTree.fromstring(r.text.encode('utf-8'))
+		return e
 
 ####################################################################################################
 # PlexHue Commands
 ####################################################################################################
 
-CURRENT_STATUS = ''
-
-def run_websocket_lister():
+def run_websocket_watcher():
 	global ws
 	Log('Starting websocket listener')
 	websocket.enableTrace(True)
-	ws = websocket.WebSocketApp("ws://127.0.0.1:32400/:/websockets/notifications?X-Plex-Token=" + ACCESS_TOKEN,
-	                          on_message = on_message)
-	                          # on_error = on_error,
-	                          # on_close = on_close)
+	ws = websocket.WebSocketApp("ws://" + Prefs['PLEX_ADDRESS'] + "/:/websockets/notifications?X-Plex-Token=" + ACCESS_TOKEN,
+		on_message = on_message)
+		# on_error = on_error,
+		# on_close = on_close)
 	# ws.on_open = on_open
 	Log("Up and running, listening")
 	ws.run_forever()
+
+CURRENT_STATUS = ''
+
 
 def is_plex_playing(plex_status):
 	global CURRENT_STATUS
@@ -297,87 +424,80 @@ def is_plex_playing(plex_status):
 				for username in configuredusers:
 					if item.find('User').get('title') == username:
 						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS != item.find('Player').get('state'):
+							if  CURRENT_STATUS == '':
+								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
+								hue.get_hue_light_initial_state()
 							CURRENT_STATUS = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
-							if Prefs['HUE_ACTION_PLAYING'] == "Turn Off":
-								turn_off_lights()
-							if Prefs['HUE_ACTION_PLAYING'] == "Turn On":
-								turn_on_lights()
-							if Prefs['HUE_ACTION_PLAYING'] == "Dim":
-								dim_lights()
-							if Prefs['HUE_ACTION_PLAYING'] == "Nothing":
-								pass
+							choose_action(CURRENT_STATUS)
 							return False
 						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS != item.find('Player').get('state'):
+							if  CURRENT_STATUS == '':
+								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
+								hue.get_hue_light_initial_state()
 							CURRENT_STATUS = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
-							if Prefs['HUE_ACTION_PAUSED'] == "Turn Off":
-								turn_off_lights()
-							if Prefs['HUE_ACTION_PAUSED'] == "Turn On":
-								turn_on_lights()
-							if Prefs['HUE_ACTION_PAUSED'] == "Dim":
-								dim_lights()
-							if Prefs['HUE_ACTION_PAUSED'] == "Nothing":
-								pass
+							choose_action(CURRENT_STATUS)
 							return False
 						else:
 							return False
 
 
 	if CURRENT_STATUS == 'stopped':
-		print(time.strftime("%I:%M:%S") + " - Playback stopped");
+		Log(time.strftime("%I:%M:%S") + " - Waiting for new playback")
+		CURRENT_STATUS = ''
 		return False
 
 
 	CURRENT_STATUS = 'stopped'
-	print(time.strftime("%I:%M:%S") + " - Playback stopped");
-	#reset_lights()
-	if Prefs['HUE_ACTION_STOPPED'] == "Turn Off":
-		turn_off_lights()
-	if Prefs['HUE_ACTION_STOPPED'] == "Turn On":
-		turn_on_lights()
-	if Prefs['HUE_ACTION_STOPPED'] == "Dim":
-		dim_lights()
-	if Prefs['HUE_ACTION_STOPPED'] == "Nothing":
-		pass
+	Log(time.strftime("%I:%M:%S") + " - Playback stopped");
+	choose_action(CURRENT_STATUS)
+	Log(CURRENT_STATUS)
 
+def choose_action(state):
+	Log("Selecting action")
+	Log(state.upper())
+	if Prefs['HUE_ACTION_' + state.upper()] == "Turn Off":
+		Log("turning off")
+		turn_off_lights()
+		return
+	if Prefs['HUE_ACTION_' + state.upper()] == "Turn On":
+		turn_on_lights()
+		return
+	if Prefs['HUE_ACTION_' + state.upper()] == "Dim":
+		dim_lights()
+	if Prefs['HUE_ACTION_' + state.upper()] == "Nothing":
+		return
+	if Prefs['HUE_ACTION_' + state.upper()] == "Reset":
+		reset_lights()
+		return
 
 def reset_lights():
 	Log("Reseting lights")
-	Hue.reset_light_state()
+	hue.reset_lights_state()
 	pass
 
 def turn_off_lights():
 	Log("Turning off lights")
-	update_light_state(False, 50)
+	hue.update_light_state(False)
 	pass
 
 def turn_on_lights():
 	Log("Turning on lights")
-	update_light_state(True, 254)
+	hue.update_light_state(True, 254)
 	pass
 
 def dim_lights():
 	Log("Dimming lights")
-	update_light_state(True, 100)
+	hue.update_light_state(True, 100)
 	pass
 
 def on_message(ws, message):
-    json_object = json.loads(message)
-    Log(json_object)
-    if json_object['type'] == 'playing':
-        plex_status = get_plex_status()
-        # if json_object['_children'][0]['state'] == 'playing':
-        is_plex_playing(plex_status)
-        # turn_off_lights()
-
-        # elif json_object['_children'][0]['state'] == 'paused':
-        #     if is_plex_paused(plex_status):
-        #         dim_lights()
-        #
-        # elif json_object['_children'][0]['state'] == 'stopped':
-        #     if is_plex_stopped(plex_status):
-        #         turn_on_lights()
+	json_object = json.loads(message)
+	Log(json_object)
+	if json_object['type'] == 'playing':
+		plex_status = plex.get_plex_status()
+		is_plex_playing(plex_status)
 
 def on_close(ws):
-    print "### closed ###"
+	Log("### closed ###")

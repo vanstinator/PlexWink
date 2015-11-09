@@ -6,14 +6,8 @@
         "default": "192.168.0.44"
     },
     {
-        "id": "HUE_USERNAME",
-        "label": "Philips Hue API username",
-        "type": "text",
-        "default": "newdeveloper"
-    },
-    {
         "id": "HUE_LIGHTS",
-        "label": "Name of the lights to trigger",
+        "label": "Name of the lights to trigger (comma separated, case sensitive)",
         "type": "text",
         "default": "LivingColors 1, LivingColors 2"
     },
@@ -34,6 +28,7 @@
         "label": "When a media is paused:",
         "type": "enum",
         "values": [
+          "Reset",
           "Nothing",
           "Dim",
           "Turn Off",
@@ -46,6 +41,7 @@
         "label": "When a media is stopped:",
         "type": "enum",
         "values": [
+          "Reset",
           "Nothing",
           "Dim",
           "Turn Off",
@@ -75,13 +71,13 @@
     },
     {
         "id": "PLEX_AUTHORIZED_USERS",
-        "label": "Name of the users able to trigger",
+        "label": "Names of the users able to trigger (comma separated, case sensitive)",
         "type": "text",
         "default": "username1, username2"
     },
     {
         "id": "PLEX_CLIENTS",
-        "label": "Name of plex clients able to trigger",
+        "label": "Names of plex clients able to trigger (comma separated, case sensitive)",
         "type": "text",
         "default": "client1, client2"
     }
