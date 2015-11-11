@@ -1,6 +1,7 @@
 import os
 import time
 from time import sleep
+from datetime import datetime, date
 import websocket
 from phue import Bridge
 import sys
@@ -8,6 +9,9 @@ import requests
 import json
 import re
 import threading
+import random
+from astral import Astral
+import pytz
 
 import xml.etree.ElementTree as ElementTree
 	
@@ -31,13 +35,48 @@ def Start():
 	ObjectContainer.title1 = NAME
 	ObjectContainer.art = R(ART)
 	ValidatePrefs()
+	var = [
+			{
+				"client": "RasPlex",
+				"Lights": [
+					"Living Colors 1",
+					"Living Colors 2"
+					],
+				"Users": [
+					"ledge74",
+					"ledge741"
+					]
+				},
+				{
+				"client": "RasPlex2",
+				"Lights": [
+					"Living Colors 12",
+					"Living Colors 22"
+					],
+				"Users": [
+					"ledge742",
+					"ledge7412"
+					]
+				}
+			]
+	ii = json.dumps(var)
+
+	jj = json.loads(ii)
+
+	for client in jj:
+		Log(client["client"])
+		Log(str(client["Lights"]))
+		for lights in client["Lights"]:
+			Log(lights)
+		for users in client["Users"]:
+			Log(users)
 
 ####################################################################################################
 # Main menu
 ####################################################################################################
 @handler(PREFIX, NAME, art=R(ART), thumb=R(ICON))
 def MainMenu(header=NAME, message="Hello"):
-	oc = ObjectContainer(no_history=True)
+	oc = ObjectContainer(no_cache=True,no_history=True, replace_parent=True)
 	if message is not "Hello":
 		oc.header = header
 		oc.message = message
@@ -65,7 +104,7 @@ def MainMenu(header=NAME, message="Hello"):
 ####################################################################################################
 @route(PREFIX + '/AdvancedMenu')
 def AdvancedMenu(header="AdvancedMenu", message="Hello"):
-	oc = ObjectContainer(title2 = "Advanced Menu",no_history=True, replace_parent=True)
+	oc = ObjectContainer(title2 = "Advanced Menu",no_cache=True,no_history=True, replace_parent=True)
 	if message is not "Hello":
 		oc.header = header
 		oc.message = message
@@ -115,7 +154,10 @@ def ResetHueToken():
 ####################################################################################################
 @route(PREFIX + '/MyLights')
 def MyLights(header="My Lights"):
-	oc = ObjectContainer(title2 =header,no_history=True, replace_parent=True)
+	oc = ObjectContainer(title2 =header)
+	oc.no_history = True
+	oc.no_cache = True
+	oc.replace_parent = True
 	i = 0
 	bigarray = []
 	for lights in B.lights:
@@ -136,18 +178,18 @@ def MyLights(header="My Lights"):
 			title = menu_text + " " + lights.name,
 			thumb = R(PREFS_ICON)))
 	if i == 0:
-		oc.add(PopupDirectoryObject(
+		oc.add(DirectoryObject(
 			key = Callback(MainMenu),
 			title = "No lights available",
 			thumb = R(PREFS_ICON)))
 	else:
-		oc.add(PopupDirectoryObject(
+		oc.add(DirectoryObject(
 			key = Callback(LightAction,
 				light_id = bigarray,
 				on = True),
 			title = "Turn all lights on",
 			thumb = R(PREFS_ICON)))
-		oc.add(PopupDirectoryObject(
+		oc.add(DirectoryObject(
 			key = Callback(LightAction,
 				light_id = bigarray,
 				on = False),
@@ -160,7 +202,9 @@ def MyLights(header="My Lights"):
 ####################################################################################################
 def LightAction(light_id, on):
 	command =  {'on' : on}
-	Log(B.set_light(light_id, command))
+	try: Log(B.set_light(light_id, command))
+	except:
+		pass
 	return MyLights()
 
 ####################################################################################################
@@ -269,7 +313,7 @@ class HueCheck:
 	def __init__(self):
 		Log("Checking if username is registered and if bridge if reachable")
 	def check_username(self):
-		#Dict['HUE_USERNAME'] = "newdeveloper"
+		Dict['HUE_USERNAME'] = "newdeveloper"
 		if Dict['HUE_USERNAME']:
 			try:
 				r = requests.get('http://' + Prefs['HUE_BRIDGE_IP'] + '/api/' + Dict['HUE_USERNAME'])
@@ -344,6 +388,11 @@ class Hue:
 	def update_light_state(self, powered, brightness=254):
 		Log("--Updating lights")
 		command =  {'on' : powered, 'bri' : brightness}
+		if Prefs['HUE_RANDOMIZE'] is True and powered is True:
+			Log("---Randomizing")
+			hue = random.randint(0,65535)
+			sat = random.randint(100,254)
+			command =  {'on' : powered, 'bri' : brightness, 'sat': sat, 'hue': hue}
 		if powered is False:
 			command =  {'on' : powered}
 		B.set_light(LIGHT_GROUPS, command)
@@ -418,18 +467,23 @@ def is_plex_playing(plex_status):
 	pattern = re.compile("^\s+|\s*,\s*|\s+$")
 	configuredclients = [x for x in pattern.split(Prefs['PLEX_CLIENTS']) if x]
 	configuredusers = [x for x in pattern.split(Prefs['PLEX_AUTHORIZED_USERS']) if x]
+	i = 0
+	j = 0
 	for item in plex_status.findall('Video'):
 		for client_name in configuredclients:
 			if item.find('Player').get('title') == client_name:
+				i += 1
 				for username in configuredusers:
 					if item.find('User').get('title') == username:
+						j += 1
 						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS != item.find('Player').get('state'):
 							if  CURRENT_STATUS == '':
 								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
 								hue.get_hue_light_initial_state()
 							CURRENT_STATUS = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
-							choose_action(CURRENT_STATUS)
+							if isitdark() is True:
+								choose_action(CURRENT_STATUS)
 							return False
 						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS != item.find('Player').get('state'):
 							if  CURRENT_STATUS == '':
@@ -437,11 +491,18 @@ def is_plex_playing(plex_status):
 								hue.get_hue_light_initial_state()
 							CURRENT_STATUS = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS, item.get('grandparentTitle'), item.get('title'), client_name))
-							choose_action(CURRENT_STATUS)
+							if isitdark() is True:
+								choose_action(CURRENT_STATUS)
 							return False
 						else:
 							return False
+	if i == 0:
+		Log("No authorized clients are playing - skipping")
+		return False
 
+	if j == 0:
+		Log("No authorized users are playing - skipping")
+		return False
 
 	if CURRENT_STATUS == 'stopped':
 		Log(time.strftime("%I:%M:%S") + " - Waiting for new playback")
@@ -451,26 +512,51 @@ def is_plex_playing(plex_status):
 
 	CURRENT_STATUS = 'stopped'
 	Log(time.strftime("%I:%M:%S") + " - Playback stopped");
-	choose_action(CURRENT_STATUS)
+	if isitdark() is True:
+		choose_action(CURRENT_STATUS)
 	Log(CURRENT_STATUS)
 
 def choose_action(state):
 	Log("Selecting action")
 	Log(state.upper())
 	if Prefs['HUE_ACTION_' + state.upper()] == "Turn Off":
-		Log("turning off")
 		turn_off_lights()
 		return
-	if Prefs['HUE_ACTION_' + state.upper()] == "Turn On":
+	elif Prefs['HUE_ACTION_' + state.upper()] == "Turn On":
 		turn_on_lights()
 		return
-	if Prefs['HUE_ACTION_' + state.upper()] == "Dim":
+	elif Prefs['HUE_ACTION_' + state.upper()] == "Dim":
 		dim_lights()
-	if Prefs['HUE_ACTION_' + state.upper()] == "Nothing":
+	elif Prefs['HUE_ACTION_' + state.upper()] == "Nothing":
 		return
-	if Prefs['HUE_ACTION_' + state.upper()] == "Reset":
+	elif Prefs['HUE_ACTION_' + state.upper()] == "Reset":
 		reset_lights()
 		return
+	else:
+		Log("No matching action found")
+		return
+
+def isitdark():
+	if Prefs['HUE_DARK'] is False:
+		Log("Dark pref set to false: triggering")
+		return True
+	else:
+		city_name = Prefs['HUE_CITY']
+		a = Astral()
+		city = a[city_name]
+		today_date = date.today()
+		sun = city.sun(date=today_date, local=True)
+		utc=pytz.UTC
+		#Log(Prefs['HUE_CITY'])
+		#Log('Sunrise: %s' % str(sun['sunrise']))
+		#Log('Sunset:  %s' % str(sun['sunset']))
+		#Log('Now:  %s' % str(utc.localize(datetime.now())))
+		if sun['sunrise'] <= utc.localize(datetime.now()) <= sun['sunset']:        
+			Log("It's sunny outside: not trigerring")
+			return False
+		else:
+			Log("It's dark outside: triggering")
+			return True
 
 def reset_lights():
 	Log("Reseting lights")
@@ -489,12 +575,13 @@ def turn_on_lights():
 
 def dim_lights():
 	Log("Dimming lights")
-	hue.update_light_state(True, 100)
+	dim_value = int(float(Prefs['HUE_DIM']))
+	hue.update_light_state(True, dim_value)
 	pass
 
 def on_message(ws, message):
 	json_object = json.loads(message)
-	Log(json_object)
+	#Log(json_object)
 	if json_object['type'] == 'playing':
 		plex_status = plex.get_plex_status()
 		is_plex_playing(plex_status)
