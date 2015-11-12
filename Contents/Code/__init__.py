@@ -36,7 +36,6 @@ def Start():
 	ObjectContainer.art = R(ART)	
 	ValidatePrefs()
 
-
 ####################################################################################################
 # Main menu
 ####################################################################################################
@@ -183,7 +182,7 @@ def ConnectBridge():
 		thumb = R('hellohue.png'),
 	)
 ####################################################################################################
-# Returns object to signin to Hue Bridge
+# Callback to signin to Hue Bridge
 ####################################################################################################
 def ConnectBridgeCallback():
 	Log("Trying to connect")
@@ -216,7 +215,7 @@ def EnableHelloHue():
 	)
 
 ####################################################################################################
-# Return object to enable the Channel
+# Callback to enable the Channel
 ####################################################################################################
 def EnableHelloHueCallback():
 	Log("Trying to enable thread")
@@ -237,7 +236,7 @@ def DisableHelloHue():
 	)
 
 ####################################################################################################
-# Return object to disable the Channel
+# Callback to disable the Channel
 ####################################################################################################
 def DisableHelloHueCallback():
 	Log("Trying to disable thread")
@@ -274,7 +273,7 @@ def ValidatePrefs():
 	return MainMenu(header=NAME)
 
 ####################################################################################################
-# Philips Hue Commands
+# Philips Hue Check Commands
 ####################################################################################################
 
 class HueCheck:
@@ -319,6 +318,10 @@ class HueCheck:
 		else:
 			return e
 
+####################################################################################################
+# Philips Hue Commands
+####################################################################################################
+
 class Hue:
 	def __init__(self):
 		Log("Initializing Hue class")
@@ -340,6 +343,8 @@ class Hue:
 			line = {}
 			line['on'] = B.get_light(light, 'on')
 			line['bri'] = B.get_light(light, 'bri')
+			line['hue'] = B.get_light(light, 'hue')
+			line['sat'] = B.get_light(light, 'sat')
 			dico[light] = line
 		LIGHT_GROUPS_INITIAL_STATE[client_name] = dico
 		Log(LIGHT_GROUPS_INITIAL_STATE[client_name])
@@ -360,8 +365,10 @@ class Hue:
 	def reset_lights_state(self, client_name):
 		Log("--Reset lights")
 		lights = LIGHT_GROUPS_INITIAL_STATE[client_name]
+		Log("lights : %s" % lights)
 		for light in lights:
-			command = {'on': lights[light]['on'], 'bri': lights[light]['bri']}
+			Log("light : %s" % light)
+			command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'hue':lights[light]['hue'], 'sat': lights[light]['sat']}
 			B.set_light(light, command)
 
 ####################################################################################################
@@ -404,7 +411,7 @@ class Plex:
 		return e
 
 ####################################################################################################
-# PlexHue Commands
+# Compile rooms in list/dictionary on plugin start or pref change
 ####################################################################################################
 
 def CompileRooms():
@@ -425,6 +432,10 @@ def CompileRooms():
 		j += 1
 	Log("Room check done")
 
+####################################################################################################
+# Put all available clients status to '' on plugin start or pref change
+####################################################################################################
+
 def InitiateCurrentStatus():
 	Log("Initiating current status")
 	global CURRENT_STATUS, LIGHT_GROUPS_INITIAL_STATE
@@ -433,11 +444,19 @@ def InitiateCurrentStatus():
 	for client in ReturnClients():
 		CURRENT_STATUS[client] = ''
 
+####################################################################################################
+# Return all configured clients from preferences
+####################################################################################################
+
 def ReturnClients():
 	client_list = []
 	for clients in rooms:
 		client_list.append(clients['client'])
 	return client_list
+
+####################################################################################################
+# Return all lights attached a specific client
+####################################################################################################
 
 def ReturnLightsFromClient(client):
 	lights_list = []
@@ -447,6 +466,10 @@ def ReturnLightsFromClient(client):
 				lights_list.append(light)
 	return lights_list
 
+####################################################################################################
+# Return the list of all lights
+####################################################################################################
+
 def ReturnAllLights():
 	lights_list = []
 	for clients in rooms:
@@ -455,6 +478,10 @@ def ReturnAllLights():
 				lights_list.append(light)
 	return lights_list
 
+####################################################################################################
+# Return a list of authorized users for a specific client
+####################################################################################################
+
 def ReturnUsersFromClient(client):
 	users_list = []
 	for clients in rooms:
@@ -462,6 +489,10 @@ def ReturnUsersFromClient(client):
 			for light in clients['Users']:
 				users_list.append(light)
 	return users_list
+
+####################################################################################################
+# Listen to Plex Media Server websocket 
+####################################################################################################
 
 def run_websocket_watcher():
 	global ws
@@ -475,21 +506,35 @@ def run_websocket_watcher():
 	Log("Up and running, listening")
 	ws.run_forever()
 
+####################################################################################################
+# If websocket detected, trigger PMS sessions status analyze
+####################################################################################################
+
+def on_message(ws, message):
+	json_object = json.loads(message)
+	#Log(json_object)
+	if json_object['type'] == 'playing':
+		plex_status = plex.get_plex_status()
+		is_plex_playing(plex_status)
+
+def on_close(ws):
+	Log("### closed ###")
+
+####################################################################################################
+# Parse PMS sessions status
+####################################################################################################
+
 def is_plex_playing(plex_status):
 	configuredclients = ReturnClients()
-	i = 0
-	j = 0
 	ACTIVE_CLIENTS = []
 	for item in plex_status.findall('Video'):
 		for client_name in configuredclients:
 			if item.find('Player').get('title') == client_name:
 				if not client_name in ACTIVE_CLIENTS:
 					ACTIVE_CLIENTS.append(client_name)
-				i += 1
 				configuredusers = ReturnUsersFromClient(client_name)
 				for username in configuredusers:
 					if item.find('User').get('title') == username:
-						j += 1
 						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name] != item.find('Player').get('state'):
 							if  CURRENT_STATUS[client_name] == '':
 								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
@@ -508,21 +553,6 @@ def is_plex_playing(plex_status):
 							if isitdark() is True:
 								choose_action(CURRENT_STATUS[client_name], ReturnLightsFromClient(client_name), client_name)
 							return False
-						#else:
-						#	return False
-	#if i == 0 and Prefs['HUE_ADVANCED'] is False:
-	#	Log("No authorized clients are playing - skipping")
-	#	return False
-
-	#if j == 0 and Prefs['HUE_ADVANCED'] is False:
-	#	Log("No authorized users are playing - skipping")
-	#	return False
-
-	#for client in CURRENT_STATUS:
-	#	if CURRENT_STATUS[client] == 'stopped':
-	#		Log(time.strftime("%I:%M:%S") + " - Waiting for new playback on %s"%client)
-	#		CURRENT_STATUS[client] = ''
-	#		return False
 
 	for client in CURRENT_STATUS:
 		if not client in ACTIVE_CLIENTS:
@@ -530,8 +560,11 @@ def is_plex_playing(plex_status):
 				CURRENT_STATUS[client] = ''
 				Log(time.strftime("%I:%M:%S") + " - Playback stopped on %s - Waiting for new playback" % client);
 				if isitdark() is True:
-					choose_action(CURRENT_STATUS[client], ReturnLightsFromClient[client])
-				Log(CURRENT_STATUS[client])
+					choose_action("stopped", ReturnLightsFromClient(client), client)
+
+####################################################################################################
+# Choose action based on playback status and preferences
+####################################################################################################
 
 def choose_action(state, lights, client_name):
 	Log("Selecting action")
@@ -547,11 +580,16 @@ def choose_action(state, lights, client_name):
 	elif Prefs['HUE_ACTION_' + state.upper()] == "Nothing":
 		return
 	elif Prefs['HUE_ACTION_' + state.upper()] == "Reset":
+		Log("will reset")
 		reset_lights(client_name)
 		return
 	else:
 		Log("No matching action found")
 		return
+
+####################################################################################################
+# Calculate if it's dark outside at user's location
+####################################################################################################
 
 def isitdark():
 	if Prefs['HUE_DARK'] is False:
@@ -570,6 +608,10 @@ def isitdark():
 		else:
 			Log("It's dark outside: triggering")
 			return True
+
+####################################################################################################
+# Execute lights actions
+####################################################################################################
 
 def reset_lights(client_name):
 	Log("Reseting lights")
@@ -591,13 +633,3 @@ def dim_lights(lights):
 	dim_value = int(float(Prefs['HUE_DIM']))
 	hue.update_light_state(powered=True, brightness=dim_value, lights=lights)
 	pass
-
-def on_message(ws, message):
-	json_object = json.loads(message)
-	#Log(json_object)
-	if json_object['type'] == 'playing':
-		plex_status = plex.get_plex_status()
-		is_plex_playing(plex_status)
-
-def on_close(ws):
-	Log("### closed ###")
