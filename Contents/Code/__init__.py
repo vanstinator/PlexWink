@@ -281,7 +281,7 @@ class HueCheck:
 	def __init__(self):
 		Log("Checking if username is registered and if bridge if reachable")
 	def check_username(self):
-		Dict['HUE_USERNAME'] = "newdeveloper"
+		#Dict['HUE_USERNAME'] = "newdeveloper"
 		if Dict['HUE_USERNAME']:
 			try:
 				r = requests.get('http://' + Prefs['HUE_BRIDGE_IP'] + '/api/' + Dict['HUE_USERNAME'])
