@@ -1,15 +1,29 @@
 [
     {
+        "id": "PLEX_USERNAME",
+        "label": "Plex.TV login",
+        "type": "text",
+        "default": "Username"
+    },
+    {
+        "id": "PLEX_PASSWORD",
+        "label": "Plex.TV password",
+        "type": "text",
+        "option": "hidden",
+        "default": "",
+        "secure": "true"
+    },
+    {
+        "id": "PLEX_ADDRESS",
+        "label": "Plex Server Address",
+        "type": "text",
+        "default": "127.0.0.1:32400"
+    },
+    {
         "id": "HUE_BRIDGE_IP",
         "label": "Philips Hue Bridge Address",
         "type": "text",
         "default": "192.168.0.44"
-    },
-    {
-        "id": "HUE_LIGHTS",
-        "label": "Name of the lights to trigger (comma separated, case sensitive)",
-        "type": "text",
-        "default": "LivingColors 1, LivingColors 2"
     },
     {
         "id": "HUE_ACTION_PLAYING",
@@ -91,36 +105,124 @@
     "default": "Paris"
     },
     {
-        "id": "PLEX_USERNAME",
-        "label": "Plex.TV login",
-        "type": "text",
-        "default": "Username"
+        "id": "HUE_ROOM_1",
+        "label": "Activate PlexHue in room 1",
+        "type": "bool",
+        "default": "true"
     },
     {
-        "id": "PLEX_PASSWORD",
-        "label": "Plex.TV password",
+        "id": "PLEX_CLIENT_1",
+        "label": "Name of the plex client in room 1 (one value, case sensitive)",
         "type": "text",
-        "option": "hidden",
-        "default": "",
-        "secure": "true"
+        "default": "client1"
     },
     {
-        "id": "PLEX_ADDRESS",
-        "label": "Plex Server Address",
-        "type": "text",
-        "default": "127.0.0.1:32400"
-    },
-    {
-        "id": "PLEX_AUTHORIZED_USERS",
-        "label": "Names of the users able to trigger (comma separated, case sensitive)",
+        "id": "PLEX_AUTHORIZED_USERS_1",
+        "label": "Names of the users able to trigger in room 1 (comma separated, case sensitive)",
         "type": "text",
         "default": "username1, username2"
     },
     {
-        "id": "PLEX_CLIENTS",
-        "label": "Names of plex clients able to trigger (comma separated, case sensitive)",
+        "id": "HUE_LIGHTS_1",
+        "label": "Name of the lights to trigger in room 1 (comma separated, case sensitive)",
         "type": "text",
-        "default": "client1, client2"
+        "default": "LivingColors 1, LivingColors 2"
+    },
+    {
+        "id": "HUE_ROOM_2",
+        "label": "Activate PlexHue in room 2",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_CLIENT_2",
+        "label": "Name of the plex client in room 2 (one value, case sensitive)",
+        "type": "text",
+        "default": "client2"
+    },
+    {
+        "id": "PLEX_AUTHORIZED_USERS_2",
+        "label": "Names of the users able to trigger in room 2 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "username1, username2"
+    },
+    {
+        "id": "HUE_LIGHTS_2",
+        "label": "Name of the lights to trigger in room 2 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "LivingColors 3, LivingColors 4"
+    },
+    {
+        "id": "HUE_ROOM_3",
+        "label": "Activate PlexHue in room 3",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_CLIENT_3",
+        "label": "Name of the plex client in room 3 (one value, case sensitive)",
+        "type": "text",
+        "default": "client3"
+    },
+    {
+        "id": "PLEX_AUTHORIZED_USERS_3",
+        "label": "Names of the users able to trigger in room 3 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "username1, username2"
+    },
+    {
+        "id": "HUE_LIGHTS_3",
+        "label": "Name of the lights to trigger in room 3 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "LivingColors 5"
+    },
+    {
+        "id": "HUE_ROOM_4",
+        "label": "Activate PlexHue in room 4",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_CLIENT_4",
+        "label": "Name of the plex client in room 4 (one value, case sensitive)",
+        "type": "text",
+        "default": "client4"
+    },
+    {
+        "id": "PLEX_AUTHORIZED_USERS_4",
+        "label": "Names of the users able to trigger in room 4 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "username1"
+    },
+    {
+        "id": "HUE_LIGHTS_4",
+        "label": "Name of the lights to trigger in room 4 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "LivingColors 6"
+    },
+    {
+        "id": "HUE_ROOM_5",
+        "label": "Activate PlexHue in room 5",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_CLIENT_5",
+        "label": "Name of the plex client in room 5 (one value, case sensitive)",
+        "type": "text",
+        "default": "client5"
+    },
+    {
+        "id": "PLEX_AUTHORIZED_USERS_5",
+        "label": "Names of the users able to trigger in room 5 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "username1"
+    },
+    {
+        "id": "HUE_LIGHTS_5",
+        "label": "Name of the lights to trigger in room 5 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "LivingColors 7, LivingColors 8, LivingColors 9"
     }
 ]
 
