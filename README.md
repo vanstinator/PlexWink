@@ -14,24 +14,24 @@ You can also turn your lights on and off inside the channel.
 ### Configuration
 
 The config is pretty simple and only needs to be done once. Configure your settings following the details below.
-One room is composed of **one client**, **one or multiple users** and **one or multiple lights**.
+One room is composed of **one client**, **one or multiple users** and **one or multiple lights**, as well as the actions : on play, on stop, on pause, dim value, and only trigger if it's dark outside.
 
 * ```Plex.tv login``` is your Plex login.
 * ```Plex.tv passwords``` is your Plex password. It is only sent to plex.tv to get an identification token (so you must have a working internet access).
 * ```Plex Server Address``` is the local adress to reach your server.
-* ```Philips Hue Bridge Address``` is the ip address of your Philips Bridge
-* ```When a media is playing``` is the action that will fire when a media is playing
-* ```When a media is paused``` is the action that will fire when a media is paused
-* ```When a media is stopped``` is the action that will fire when a media is stopped
-* ```Choose dim value``` is the value your lights will dim to. (20 is the min brightness and 240 is max)
-* ```Randomize hue and saturation on Dim/Turn On``` will randomize your light color each time the action turn on or dim is fired.
-* ```Only trigger lights if it's dark outside``` Tick to only trigger your lights between sunrise and sunset.
+* ```Philips Hue Bridge Address``` is the ip address of your Philips Bridge.
 * ```Nearest city from your location``` Used to calculate to calculate sunrise/sunset hours at your location.
-* ```Activate HelloHue in room 1``` Tick to activate room 1 (and fill the client, users and lights settings for room 1)
+* ```Activate HelloHue in room 1``` Tick to activate room 1 (and fill the client, users and lights settings for room 1).
 * ```Name of plex client able to trigger in room 1``` You can find the list of users in PMS -> settings -> devices. Only put ONE client per room. If your have two clients in the same room, activate an other room and fill the settings with the other clients name and the same lights names.
 * ```Name of the users able to trigger in room 1``` You can find the list of users in PMS -> settings -> users -> myhome. You can put multiple users (comma separated values, case sensitive).
 * ```Name of the lights to trigger in room 1``` is the list of lights that will be triggered in room 1. You can put multiple users (comma separated values, case sensitive).
-* ```Activate HelloHue in room 2``` Same thing as ```Activate HelloHue in room 2```
+* ```When a media is playing in room 1``` is the action that will fire when a media is playing in room 1.
+* ```When a media is paused in room 1``` is the action that will fire when a media is paused in room 1.
+* ```When a media is stopped in room 1``` is the action that will fire when a media is stopped in room 1.
+* ```Choose dim value in room 1``` is the value your lights will dim to. (20 is the min brightness and 240 is max)
+* ```Randomize hue and saturation on Dim/Turn On in room 1``` will randomize your light color each time the action turn on or dim is fired.
+* ```Only trigger lights if it's dark outside in room 1``` Tick to only trigger your lights between sunrise and sunset.
+* ```Activate HelloHue in room 2``` Same thing as ```Activate HelloHue in room 1``` ...
 * ...
 
 ### Usage
@@ -58,8 +58,8 @@ One room is composed of **one client**, **one or multiple users** and **one or m
 * ```My Lights``` allows you to trigger your lights from the channel
 * ```Enable HelloHue``` disable the channel (stop listening to items being played)
 * ```Disable HelloHue``` resumes the channel (start listening to items being played)
-* ```Restart HelloHue``` takes into account your new Plex.TV login/password if you updated it in the channel settings.
+* ```Advanced``` --> ```Restart HelloHue`` takes into account your new Plex.TV login/password if you updated it in the channel settings.
 
 ### How to report a bug and ask for features
 
-If you have a problem with this channel, raise an issue on GitHub. Don't forget to add a Log file of this channel : https://support.plex.tv/hc/en-us/articles/200250417-Plex-Media-Server-Log-Files
+If you have a problem with this channel, [raise an issue on GitHub](https://forums.plex.tv/discussion/193095/rel-hellohue-control-your-philips-hue-lights-via-plex) or on the [Plex Forums](https://forums.plex.tv/discussion/193095/rel-hellohue-control-your-philips-hue-lights-via-plex). Don't forget to add a Log file of this channel : https://support.plex.tv/hc/en-us/articles/200250417-Plex-Media-Server-Log-Files

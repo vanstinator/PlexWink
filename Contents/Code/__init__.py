@@ -48,18 +48,12 @@ def MainMenu(header=NAME, message="Hello"):
 	if auth is False:
 		oc.add(ConnectBridge())
 	if auth is True:
-		oc.add(DirectoryObject(
-			key = Callback(MyLights),
-			title = 'My Lights',
-			thumb = R(PREFS_ICON)))
+		oc.add(DirectoryObject(key = Callback(MyLights),title = 'My Lights',thumb = R(PREFS_ICON)))
 		if "thread_websocket" in str(threading.enumerate()):
 			oc.add(DisableHelloHue())
 		if not "thread_websocket" in str(threading.enumerate()):
 			oc.add(EnableHelloHue())
-	oc.add(DirectoryObject(
-		key = Callback(AdvancedMenu),
-		title = 'Advanced Menu',
-		thumb = R(PREFS_ICON)))
+	oc.add(DirectoryObject(key = Callback(AdvancedMenu),title = 'Advanced Menu',thumb = R(PREFS_ICON)))
 	# Add item for setting preferences	
 	oc.add(PrefsObject(title = L('Preferences'), thumb = R(PREFS_ICON)))
 	return oc
@@ -73,14 +67,8 @@ def AdvancedMenu(header="AdvancedMenu", message="Hello"):
 	if message is not "Hello":
 		oc.header = header
 		oc.message = message
-	oc.add(PopupDirectoryObject(
-		key = Callback(ResetPlexToken),
-		title = 'Reset Plex.TV token',
-		thumb = R(PREFS_ICON)))
-	oc.add(PopupDirectoryObject(
-		key = Callback(ResetHueToken),
-		title = 'Reset Hue token',
-		thumb = R(PREFS_ICON)))
+	oc.add(PopupDirectoryObject(key = Callback(ResetPlexToken),title = 'Reset Plex.TV token',thumb = R(PREFS_ICON)))
+	oc.add(PopupDirectoryObject(key = Callback(ResetHueToken),title = 'Reset Hue token',thumb = R(PREFS_ICON)))
 	oc.add(RestartHelloHue())
 	return oc
 ####################################################################################################
@@ -123,8 +111,8 @@ def MyLights(header="My Lights"):
 	oc.no_history = True
 	oc.no_cache = True
 	oc.replace_parent = True
-	i = 0
 	bigarray = []
+	i = 0
 	for lights in B.lights:
 		i += 1
 		menu_text = "Turn On"
@@ -135,31 +123,12 @@ def MyLights(header="My Lights"):
 		array = []
 		array.append(lights.name)
 		bigarray.append(lights.name)
-		Log(array)
-		oc.add(DirectoryObject(
-			key = Callback(LightAction,
-				light_id = array,
-				on = menu_action),
-			title = menu_text + " " + lights.name,
-			thumb = R(PREFS_ICON)))
+		oc.add(DirectoryObject(key = Callback(LightAction,light_id = array,on = menu_action),title = menu_text + " " + lights.name,thumb = R(PREFS_ICON)))
 	if i == 0:
-		oc.add(DirectoryObject(
-			key = Callback(MainMenu),
-			title = "No lights available",
-			thumb = R(PREFS_ICON)))
+		oc.add(DirectoryObject(key = Callback(MainMenu),title = "No lights available",thumb = R(PREFS_ICON)))
 	else:
-		oc.add(DirectoryObject(
-			key = Callback(LightAction,
-				light_id = bigarray,
-				on = True),
-			title = "Turn all lights on",
-			thumb = R(PREFS_ICON)))
-		oc.add(DirectoryObject(
-			key = Callback(LightAction,
-				light_id = bigarray,
-				on = False),
-			title = "Turn all lights off",
-			thumb = R(PREFS_ICON)))
+		oc.add(DirectoryObject(key = Callback(LightAction,light_id = bigarray,on = True),title = "Turn all lights on",thumb = R(PREFS_ICON)))
+		oc.add(DirectoryObject(key = Callback(LightAction,light_id = bigarray,on = False),title = "Turn all lights off",thumb = R(PREFS_ICON)))
 	return oc
 
 ####################################################################################################
@@ -176,11 +145,7 @@ def LightAction(light_id, on):
 # Item menu to signin to Hue Bridge
 ####################################################################################################
 def ConnectBridge():
-	return PopupDirectoryObject(
-		key   = Callback(ConnectBridgeCallback),
-		title = 'Press button on your bridge and click to connect',
-		thumb = R('hellohue.png'),
-	)
+	return PopupDirectoryObject(key= Callback(ConnectBridgeCallback),title = 'Press button on your bridge and click to connect',thumb = R('hellohue.png'))
 ####################################################################################################
 # Callback to signin to Hue Bridge
 ####################################################################################################
@@ -199,20 +164,12 @@ def ConnectBridgeCallback():
 # Item menu to Restart the Channel
 ####################################################################################################
 def RestartHelloHue():
-	return PopupDirectoryObject(
-		key   = Callback(ValidatePrefs),
-		title = 'Restart HelloHue (must do after changing plex.tv login/password)',
-		thumb = R('hellohue.png'),
-	)
+	return PopupDirectoryObject(key= Callback(ValidatePrefs),title = 'Restart HelloHue (must do after changing plex.tv login/password)',thumb = R('hellohue.png'))
 ####################################################################################################
 # Item menu to enable the Channel
 ####################################################################################################
 def EnableHelloHue():
-	return PopupDirectoryObject(
-		key   = Callback(EnableHelloHueCallback),
-		title = 'Enable HelloHue',
-		thumb = R('hellohue.png'),
-	)
+	return PopupDirectoryObject(key= Callback(EnableHelloHueCallback),title = 'Enable HelloHue',thumb = R('hellohue.png'))
 
 ####################################################################################################
 # Callback to enable the Channel
@@ -229,11 +186,7 @@ def EnableHelloHueCallback():
 # Item menu to disable the Channel
 ####################################################################################################
 def DisableHelloHue():
-	return PopupDirectoryObject(
-		key   = Callback(DisableHelloHueCallback),
-		title = 'Disable HelloHue',
-		thumb = R('hellohue.png'),
-	)
+	return PopupDirectoryObject(key= Callback(DisableHelloHueCallback),title ='Disable HelloHue',thumb = R('hellohue.png'))
 
 ####################################################################################################
 # Callback to disable the Channel
@@ -350,16 +303,17 @@ class Hue:
 		Log(LIGHT_GROUPS_INITIAL_STATE[client_name])
 		#return dico
 
-	def update_light_state(self, powered, brightness, lights):
+	def update_light_state(self, powered, brightness, client_name):
 		Log("--Updating lights")
 		command =  {'on' : powered, 'bri' : brightness}
-		if Prefs['HUE_RANDOMIZE'] is True and powered is True:
+		if ReturnFromClient(client_name, "randomize") is True and powered is True:
 			Log("---Randomizing")
 			hue = random.randint(0,65535)
 			sat = random.randint(100,254)
 			command =  {'on' : powered, 'bri' : brightness, 'sat': sat, 'hue': hue}
 		if powered is False:
 			command =  {'on' : powered}
+		lights = ReturnLightsFromClient(client_name)
 		Log(B.set_light(lights, command))
 
 	def reset_lights_state(self, client_name):
@@ -423,14 +377,21 @@ def CompileRooms():
 		if Prefs['HUE_ROOM_' + str(j)] is True and not Prefs['PLEX_CLIENT_' + str(j)] == '' and not Prefs['HUE_LIGHTS_' + str(j)] == '' and not Prefs['PLEX_AUTHORIZED_USERS_' + str(j)] == '':
 			room= {}
 			room['client'] = Prefs['PLEX_CLIENT_' + str(j)]
-			room['Lights'] = [x for x in pattern.split(Prefs['HUE_LIGHTS_' + str(j)]) if x]
-			room['Users'] = [x for x in pattern.split(Prefs['PLEX_AUTHORIZED_USERS_' + str(j)]) if x]
+			room['lights'] = [x for x in pattern.split(Prefs['HUE_LIGHTS_' + str(j)]) if x]
+			room['users'] = [x for x in pattern.split(Prefs['PLEX_AUTHORIZED_USERS_' + str(j)]) if x]
+			room['playing'] = Prefs['HUE_ACTION_PLAYING_' + str(j)]
+			room['paused'] = Prefs['HUE_ACTION_PAUSED_' + str(j)]
+			room['stopped'] = Prefs['HUE_ACTION_STOPPED_' + str(j)]
+			room['dim'] = Prefs['HUE_DIM_' + str(j)]
+			room['randomize'] = Prefs['HUE_RANDOMIZE_' + str(j)]
+			room['dark'] = Prefs['HUE_DARK_' + str(j)]
 			rooms.append(room)
 			Log("Adding room %s to rooms .." %j)
 		else:
 			Log("skipping room %s." %j)
 		j += 1
 	Log("Room check done")
+	Log(rooms)
 
 ####################################################################################################
 # Put all available clients status to '' on plugin start or pref change
@@ -462,7 +423,7 @@ def ReturnLightsFromClient(client):
 	lights_list = []
 	for clients in rooms:
 		if clients['client'] == client:
-			for light in clients['Lights']:
+			for light in clients['lights']:
 				lights_list.append(light)
 	return lights_list
 
@@ -473,7 +434,7 @@ def ReturnLightsFromClient(client):
 def ReturnAllLights():
 	lights_list = []
 	for clients in rooms:
-		for light in clients['Lights']:
+		for light in clients['lights']:
 			if not light in lights_list:
 				lights_list.append(light)
 	return lights_list
@@ -482,13 +443,24 @@ def ReturnAllLights():
 # Return a list of authorized users for a specific client
 ####################################################################################################
 
-def ReturnUsersFromClient(client):
+def ReturnUsersFromClient(client_name):
 	users_list = []
 	for clients in rooms:
-		if clients['client'] == client:
-			for light in clients['Users']:
+		if clients['client'] == client_name:
+			for light in clients['users']:
 				users_list.append(light)
 	return users_list
+
+
+####################################################################################################
+# Return a specific setting from a given client
+####################################################################################################
+
+def ReturnFromClient(client_name, param):
+	for clients in rooms:
+		if clients['client'] == client_name:
+			to_return = clients[param]
+	return to_return
 
 ####################################################################################################
 # Listen to Plex Media Server websocket 
@@ -537,50 +509,48 @@ def is_plex_playing(plex_status):
 					if item.find('User').get('title') == username:
 						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name] != item.find('Player').get('state'):
 							if  CURRENT_STATUS[client_name] == '':
-								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
+								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
 								hue.get_hue_light_initial_state(client_name)
 							CURRENT_STATUS[client_name] = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
-							if isitdark() is True:
-								choose_action(CURRENT_STATUS[client_name], ReturnLightsFromClient(client_name), client_name)
+							if isitdark(client_name) is True:
+								choose_action(CURRENT_STATUS[client_name], client_name)
 							return False
 						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS[client_name] != item.find('Player').get('state'):
 							if  CURRENT_STATUS[client_name] == '':
-								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
+								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
 								hue.get_hue_light_initial_state(client_name)
 							CURRENT_STATUS[client_name] = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
-							if isitdark() is True:
-								choose_action(CURRENT_STATUS[client_name], ReturnLightsFromClient(client_name), client_name)
+							if isitdark(client_name) is True:
+								choose_action(CURRENT_STATUS[client_name], client_name)
 							return False
 
-	for client in CURRENT_STATUS:
-		if not client in ACTIVE_CLIENTS:
-			if not CURRENT_STATUS[client] == 'stopped' and not CURRENT_STATUS[client] == '':
-				CURRENT_STATUS[client] = ''
-				Log(time.strftime("%I:%M:%S") + " - Playback stopped on %s - Waiting for new playback" % client);
-				if isitdark() is True:
-					choose_action("stopped", ReturnLightsFromClient(client), client)
+	for client_name in CURRENT_STATUS:
+		if not client_name in ACTIVE_CLIENTS:
+			if not CURRENT_STATUS[client_name] == 'stopped' and not CURRENT_STATUS[client_name] == '':
+				CURRENT_STATUS[client_name] = ''
+				Log(time.strftime("%I:%M:%S") + " - Playback stopped on %s - Waiting for new playback" % client_name);
+				if isitdark(client_name) is True:
+					choose_action("stopped", client_name)
 
 ####################################################################################################
 # Choose action based on playback status and preferences
 ####################################################################################################
 
-def choose_action(state, lights, client_name):
+def choose_action(state, client_name):
 	Log("Selecting action")
-	Log(state.upper())
-	if Prefs['HUE_ACTION_' + state.upper()] == "Turn Off":
-		turn_off_lights(lights)
+	if ReturnFromClient(client_name, state) == "Turn Off":
+		turn_off_lights(client_name)
 		return
-	elif Prefs['HUE_ACTION_' + state.upper()] == "Turn On":
-		turn_on_lights(lights)
+	elif ReturnFromClient(client_name, state) == "Turn On":
+		turn_on_lights(client_name)
 		return
-	elif Prefs['HUE_ACTION_' + state.upper()] == "Dim":
-		dim_lights(lights)
-	elif Prefs['HUE_ACTION_' + state.upper()] == "Nothing":
+	elif ReturnFromClient(client_name, state) == "Dim":
+		dim_lights(client_name)
+	elif ReturnFromClient(client_name, state) == "Nothing":
 		return
-	elif Prefs['HUE_ACTION_' + state.upper()] == "Reset":
-		Log("will reset")
+	elif ReturnFromClient(client_name, state) == "Reset":
 		reset_lights(client_name)
 		return
 	else:
@@ -591,8 +561,8 @@ def choose_action(state, lights, client_name):
 # Calculate if it's dark outside at user's location
 ####################################################################################################
 
-def isitdark():
-	if Prefs['HUE_DARK'] is False:
+def isitdark(client_name):
+	if ReturnFromClient(client_name, "dark") is False:
 		Log("Dark pref set to false: triggering")
 		return True
 	else:
@@ -602,8 +572,14 @@ def isitdark():
 		today_date = date.today()
 		sun = city.sun(date=today_date, local=True)
 		utc=pytz.UTC
-		if sun['sunrise'] <= utc.localize(datetime.now()) <= sun['sunset']:        
-			Log("It's sunny outside: not trigerring")
+		if sun['sunrise'] <= utc.localize(datetime.utcnow()) <= sun['sunset']:
+			if sun['sunset'] >= utc.localize(datetime.utcnow()):
+				event = "sunset"
+				timediff = sun['sunset'] - utc.localize(datetime.utcnow())
+			if sun['sunset'] <= utc.localize(datetime.utcnow()):
+				event = "sunrise"
+				timediff = utc.localize(datetime.utcnow()) - sun['sunrise']
+			Log("It's sunny outside: not trigerring (%s in %s)" % (event, timediff))
 			return False
 		else:
 			Log("It's dark outside: triggering")
@@ -618,18 +594,18 @@ def reset_lights(client_name):
 	hue.reset_lights_state(client_name)
 	pass
 
-def turn_off_lights(lights):
+def turn_off_lights(client_name):
 	Log("Turning off lights")
-	hue.update_light_state(powered=False, brightness=254, lights=lights)
+	hue.update_light_state(powered=False, brightness=254, client_name=client_name)
 	pass
 
-def turn_on_lights(lights):
+def turn_on_lights(client_name):
 	Log("Turning on lights")
-	hue.update_light_state(powered=True, brightness=254, lights=lights)
+	hue.update_light_state(powered=True, brightness=254, client_name=client_name)
 	pass
 
-def dim_lights(lights):
+def dim_lights(client_name):
 	Log("Dimming lights")
-	dim_value = int(float(Prefs['HUE_DIM']))
-	hue.update_light_state(powered=True, brightness=dim_value, lights=lights)
+	dim_value = ReturnFromClient(client_name, "dim")
+	hue.update_light_state(powered=True, brightness=int(float(dim_value)), client_name=client_name)
 	pass
