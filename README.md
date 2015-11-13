@@ -1,7 +1,7 @@
 HelloHue for Plex and Philips Hue
 =================
 
-##### Control your Philips Hue lights via Plex!
+##### Sync and control your Philips Hue lights with Plex!
 
 **Credits**
 This Channel is based on PlexWink by vanstinator.
@@ -62,4 +62,4 @@ One room is composed of **one client**, **one or multiple users** and **one or m
 
 ### How to report a bug and ask for features
 
-If you have a problem with this channel, [raise an issue on GitHub](https://forums.plex.tv/discussion/193095/rel-hellohue-control-your-philips-hue-lights-via-plex) or on the [Plex Forums](https://forums.plex.tv/discussion/193095/rel-hellohue-control-your-philips-hue-lights-via-plex). Don't forget to add a Log file of this channel : https://support.plex.tv/hc/en-us/articles/200250417-Plex-Media-Server-Log-Files
+If you have a problem with this channel, raise an issue on GitHub or on the [Plex Forums](https://forums.plex.tv/discussion/193095/rel-hellohue-control-your-philips-hue-lights-via-plex). Don't forget to add a Log file of this channel : https://support.plex.tv/hc/en-us/articles/200250417-Plex-Media-Server-Log-Files
