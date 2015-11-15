@@ -290,35 +290,34 @@ class Hue:
 		Log("Available lights: " +str(lights))
 		Log("Configured lights: " + str(ReturnAllLights()))
 
-	def get_hue_light_initial_state(self, client_name):
+	def get_hue_light_initial_state(self, client_name, room):
 		dico = {}
-		for light in ReturnLightsFromClient(client_name):
+		for light in ReturnLightsFromClient(client_name, room):
 			line = {}
 			line['on'] = B.get_light(light, 'on')
 			line['bri'] = B.get_light(light, 'bri')
 			line['hue'] = B.get_light(light, 'hue')
 			line['sat'] = B.get_light(light, 'sat')
 			dico[light] = line
-		LIGHT_GROUPS_INITIAL_STATE[client_name] = dico
-		Log(LIGHT_GROUPS_INITIAL_STATE[client_name])
+		LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)] = dico
 		#return dico
 
-	def update_light_state(self, powered, brightness, client_name):
+	def update_light_state(self, powered, brightness, client_name, room):
 		Log("--Updating lights")
 		command =  {'on' : powered, 'bri' : brightness}
-		if ReturnFromClient(client_name, "randomize") is True and powered is True:
+		if ReturnFromClient(client_name, "randomize", room) is True and powered is True:
 			Log("---Randomizing")
 			hue = random.randint(0,65535)
 			sat = random.randint(100,254)
 			command =  {'on' : powered, 'bri' : brightness, 'sat': sat, 'hue': hue}
 		if powered is False:
 			command =  {'on' : powered}
-		lights = ReturnLightsFromClient(client_name)
+		lights = ReturnLightsFromClient(client_name, room)
 		Log(B.set_light(lights, command))
 
-	def reset_lights_state(self, client_name):
+	def reset_lights_state(self, client_name, room):
 		Log("--Reset lights")
-		lights = LIGHT_GROUPS_INITIAL_STATE[client_name]
+		lights = LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)]
 		Log("lights : %s" % lights)
 		for light in lights:
 			Log("light : %s" % light)
@@ -385,6 +384,7 @@ def CompileRooms():
 			room['dim'] = Prefs['HUE_DIM_' + str(j)]
 			room['randomize'] = Prefs['HUE_RANDOMIZE_' + str(j)]
 			room['dark'] = Prefs['HUE_DARK_' + str(j)]
+			room['room'] = j
 			rooms.append(room)
 			Log("Adding room %s to rooms .." %j)
 		else:
@@ -402,27 +402,31 @@ def InitiateCurrentStatus():
 	global CURRENT_STATUS, LIGHT_GROUPS_INITIAL_STATE
 	CURRENT_STATUS = {}
 	LIGHT_GROUPS_INITIAL_STATE = {}
-	for client in ReturnClients():
-		CURRENT_STATUS[client] = ''
+	for room, client in ReturnClients().iteritems():
+		CURRENT_STATUS[client + str(room)] = ''
+	Log(CURRENT_STATUS)
 
 ####################################################################################################
 # Return all configured clients from preferences
 ####################################################################################################
 
 def ReturnClients():
-	client_list = []
+	#client_list = []
+	client_list = {}
 	for clients in rooms:
-		client_list.append(clients['client'])
+		#client_list.append(clients['client'])
+		client_list[clients['room']] = clients['client']
+	#Log(client_list)
 	return client_list
 
 ####################################################################################################
 # Return all lights attached a specific client
 ####################################################################################################
 
-def ReturnLightsFromClient(client):
+def ReturnLightsFromClient(client_name, room):
 	lights_list = []
 	for clients in rooms:
-		if clients['client'] == client:
+		if clients['client'] == client_name and clients['room'] == room:
 			for light in clients['lights']:
 				lights_list.append(light)
 	return lights_list
@@ -443,10 +447,10 @@ def ReturnAllLights():
 # Return a list of authorized users for a specific client
 ####################################################################################################
 
-def ReturnUsersFromClient(client_name):
+def ReturnUsersFromClient(client_name, room):
 	users_list = []
 	for clients in rooms:
-		if clients['client'] == client_name:
+		if clients['client'] == client_name and clients['room'] == room:
 			for light in clients['users']:
 				users_list.append(light)
 	return users_list
@@ -456,9 +460,9 @@ def ReturnUsersFromClient(client_name):
 # Return a specific setting from a given client
 ####################################################################################################
 
-def ReturnFromClient(client_name, param):
+def ReturnFromClient(client_name, param, room):
 	for clients in rooms:
-		if clients['client'] == client_name:
+		if clients['client'] == client_name and clients['room'] == room:
 			to_return = clients[param]
 	return to_return
 
@@ -499,70 +503,88 @@ def on_close(ws):
 def is_plex_playing(plex_status):
 	configuredclients = ReturnClients()
 	ACTIVE_CLIENTS = []
+	somethingwasdone = False
 	for item in plex_status.findall('Video'):
-		for client_name in configuredclients:
+		for room, client_name in configuredclients.iteritems():
 			if item.find('Player').get('title') == client_name:
-				if not client_name in ACTIVE_CLIENTS:
-					ACTIVE_CLIENTS.append(client_name)
-				configuredusers = ReturnUsersFromClient(client_name)
+				#Log('Ok')
+				client_name_room = client_name + str(room)
+				if not client_name_room in ACTIVE_CLIENTS:
+					ACTIVE_CLIENTS.append(client_name_room)
+				configuredusers = ReturnUsersFromClient(client_name, room)
 				for username in configuredusers:
+					#Log("Ok2")
 					if item.find('User').get('title') == username:
-						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name] != item.find('Player').get('state'):
-							if  CURRENT_STATUS[client_name] == '':
-								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
-								hue.get_hue_light_initial_state(client_name)
-							CURRENT_STATUS[client_name] = item.find('Player').get('state')
-							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
-							if isitdark(client_name) is True:
-								choose_action(CURRENT_STATUS[client_name], client_name)
-							return False
-						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS[client_name] != item.find('Player').get('state'):
-							if  CURRENT_STATUS[client_name] == '':
-								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
-								hue.get_hue_light_initial_state(client_name)
-							CURRENT_STATUS[client_name] = item.find('Player').get('state')
-							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name], item.get('grandparentTitle'), item.get('title'), client_name))
-							if isitdark(client_name) is True:
-								choose_action(CURRENT_STATUS[client_name], client_name)
-							return False
+						#Log("Ok3")
+						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
+							#Log("Ok4")
+							if  CURRENT_STATUS[client_name + str(room)] == '':
+								#Log("Ok5")
+								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
+								hue.get_hue_light_initial_state(client_name, room)
+							#Log("Ok6")
+							CURRENT_STATUS[client_name + str(room)] = item.find('Player').get('state')
+							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
+							if isitdark(client_name, room) is True:
+								#Log("Ok7")
+								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room)
+							#return False
+							somethingwasdone = True
+						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
+							if  CURRENT_STATUS[client_name + str(room)] == '':
+								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
+								hue.get_hue_light_initial_state(client_name, room)
+								#Log("Ok8")
+							CURRENT_STATUS[client_name + str(room)] = item.find('Player').get('state')
+							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
+							if isitdark(client_name, room) is True:
+								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room)
+							#return False
+							somethingwasdone = True
+	
+	if somethingwasdone is True:
+		return False
 
-	for client_name in CURRENT_STATUS:
-		if not client_name in ACTIVE_CLIENTS:
-			if not CURRENT_STATUS[client_name] == 'stopped' and not CURRENT_STATUS[client_name] == '':
-				CURRENT_STATUS[client_name] = ''
-				Log(time.strftime("%I:%M:%S") + " - Playback stopped on %s - Waiting for new playback" % client_name);
-				if isitdark(client_name) is True:
-					choose_action("stopped", client_name)
+	for client_name_room in CURRENT_STATUS:
+		if not client_name_room in ACTIVE_CLIENTS:
+			if not CURRENT_STATUS[client_name_room] == 'stopped' and not CURRENT_STATUS[client_name_room] == '':
+				CURRENT_STATUS[client_name_room] = ''
+				client_name = client_name_room[:-1]
+				room = int(client_name_room[-1:])
+				Log(time.strftime("%I:%M:%S") + " - Playback stopped on %s in room %s - Waiting for new playback" % (client_name, room));
+				if isitdark(client_name, room) is True:
+					choose_action("stopped", client_name, room)
 
 ####################################################################################################
 # Choose action based on playback status and preferences
 ####################################################################################################
 
-def choose_action(state, client_name):
+def choose_action(state, client_name, room):
 	Log("Selecting action")
-	if ReturnFromClient(client_name, state) == "Turn Off":
-		turn_off_lights(client_name)
-		return
-	elif ReturnFromClient(client_name, state) == "Turn On":
-		turn_on_lights(client_name)
-		return
-	elif ReturnFromClient(client_name, state) == "Dim":
-		dim_lights(client_name)
-	elif ReturnFromClient(client_name, state) == "Nothing":
-		return
-	elif ReturnFromClient(client_name, state) == "Reset":
-		reset_lights(client_name)
-		return
+	if ReturnFromClient(client_name, state, room) == "Turn Off":
+		turn_off_lights(client_name, room)
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Turn On":
+		turn_on_lights(client_name, room)
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Dim":
+		dim_lights(client_name, room)
+	elif ReturnFromClient(client_name, state, room) == "Nothing":
+		Log("Doing nothing")
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Reset":
+		reset_lights(client_name, room)
+		pass
 	else:
 		Log("No matching action found")
-		return
+		pass
 
 ####################################################################################################
 # Calculate if it's dark outside at user's location
 ####################################################################################################
 
-def isitdark(client_name):
-	if ReturnFromClient(client_name, "dark") is False:
+def isitdark(client_name, room):
+	if ReturnFromClient(client_name, "dark", room) is False:
 		Log("Dark pref set to false: triggering")
 		return True
 	else:
@@ -589,23 +611,23 @@ def isitdark(client_name):
 # Execute lights actions
 ####################################################################################################
 
-def reset_lights(client_name):
+def reset_lights(client_name, room):
 	Log("Reseting lights")
-	hue.reset_lights_state(client_name)
+	hue.reset_lights_state(client_name, room)
 	pass
 
-def turn_off_lights(client_name):
+def turn_off_lights(client_name, room):
 	Log("Turning off lights")
-	hue.update_light_state(powered=False, brightness=254, client_name=client_name)
+	hue.update_light_state(powered=False, brightness=254, client_name=client_name, room=room)
 	pass
 
-def turn_on_lights(client_name):
+def turn_on_lights(client_name, room):
 	Log("Turning on lights")
-	hue.update_light_state(powered=True, brightness=254, client_name=client_name)
+	hue.update_light_state(powered=True, brightness=254, client_name=client_name, room=room)
 	pass
 
-def dim_lights(client_name):
+def dim_lights(client_name, room):
 	Log("Dimming lights")
-	dim_value = ReturnFromClient(client_name, "dim")
-	hue.update_light_state(powered=True, brightness=int(float(dim_value)), client_name=client_name)
+	dim_value = ReturnFromClient(client_name, "dim", room)
+	hue.update_light_state(powered=True, brightness=int(float(dim_value)), client_name=client_name, room=room)
 	pass
