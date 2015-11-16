@@ -211,10 +211,11 @@ def ValidatePrefs():
 		Log("Please update your Hue preferences and try again")
 	if auth is True:
 		Log("Hue username is registered... Starting!")
+		hue = Hue()
 		CompileRooms()
+		hue.get_hue_light_groups()
 		InitiateCurrentStatus()
 		plex = Plex()
-		hue = Hue()
 		Log("Classes initiated")
 		if "thread_websocket" in str(threading.enumerate()):
 			Log("Closing daemon...")
@@ -282,29 +283,45 @@ class Hue:
 		B = Bridge(Prefs['HUE_BRIDGE_IP'], Dict['HUE_USERNAME'])
 		Log("Bridge found: " + str(B))
 
-		Log("-Getting available lights")
-		self.get_hue_light_groups()
+		#Log("-Getting available lights")
+		#self.get_hue_light_groups()
 
 	def get_hue_light_groups(self):
+		Log("-Getting available lights")
 		lights = B.lights
 		Log("Available lights: " +str(lights))
 		Log("Configured lights: " + str(ReturnAllLights()))
+		Log("Configured color lights: " + str(ReturnColorLights()))
+		Log("Configured lux lights: " + str(ReturnLuxLights()))
+		Log("Configured on/off lights: " + str(ReturnOnOffLights()))
 
 	def get_hue_light_initial_state(self, client_name, room):
 		dico = {}
-		for light in ReturnLightsFromClient(client_name, room):
+		for light in ReturnColorLightsFromClient(client_name, room):
 			line = {}
 			line['on'] = B.get_light(light, 'on')
 			line['bri'] = B.get_light(light, 'bri')
 			line['hue'] = B.get_light(light, 'hue')
 			line['sat'] = B.get_light(light, 'sat')
 			dico[light] = line
+		for light in ReturnLuxLightsFromClient(client_name, room):
+			line = {}
+			line['on'] = B.get_light(light, 'on')
+			line['bri'] = B.get_light(light, 'bri')
+			dico[light] = line
+		for light in ReturnOnOffLightsFromClient(client_name, room):
+			line = {}
+			line['on'] = B.get_light(light, 'on')
+			dico[light] = line
 		LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)] = dico
+		Log(dico)
 		#return dico
 
 	def update_light_state(self, powered, brightness, client_name, room):
 		Log("--Updating lights")
 		command =  {'on' : powered, 'bri' : brightness}
+		command_lux = {'on' : powered, 'bri' : brightness}
+		command_onoff = {'on' : powered}
 		if ReturnFromClient(client_name, "randomize", room) is True and powered is True:
 			Log("---Randomizing")
 			hue = random.randint(0,65535)
@@ -312,17 +329,36 @@ class Hue:
 			command =  {'on' : powered, 'bri' : brightness, 'sat': sat, 'hue': hue}
 		if powered is False:
 			command =  {'on' : powered}
-		lights = ReturnLightsFromClient(client_name, room)
+			command_lux = {'on' : powered}
+		lights = ReturnColorLightsFromClient(client_name, room)
+		luxlights = ReturnLuxLightsFromClient(client_name, room)
+		onofflights = ReturnOnOffLightsFromClient(client_name, room)
 		Log(B.set_light(lights, command))
+		Log(B.set_light(luxlights, command_lux))
+		Log(B.set_light(onofflights, command_onoff))
 
 	def reset_lights_state(self, client_name, room):
 		Log("--Reset lights")
 		lights = LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)]
-		Log("lights : %s" % lights)
+		#Log("lights : %s" % lights)
 		for light in lights:
-			Log("light : %s" % light)
-			command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'hue':lights[light]['hue'], 'sat': lights[light]['sat']}
-			B.set_light(light, command)
+			#Log("light : %s" % light)
+			try:
+				lights[light]['bri']
+			except:
+				Log("%s is a on/off light, triggering on parameter"% light)
+				command = {'on': lights[light]['on']}
+			else:
+				try:
+					lights[light]['hue']
+					lights[light]['sat']
+				except:
+					Log("%s is a lux light, triggering on, bri parameters"% light)
+					command = {'on': lights[light]['on'], 'bri': lights[light]['bri']}
+				else:
+					Log("%s is a color light, triggering bri, on, sat, hue parameters"% light)
+					command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'hue':lights[light]['hue'], 'sat': lights[light]['sat']}
+			Log(B.set_light(light, command))
 
 ####################################################################################################
 # Plex Commands
@@ -376,7 +412,28 @@ def CompileRooms():
 		if Prefs['HUE_ROOM_' + str(j)] is True and not Prefs['PLEX_CLIENT_' + str(j)] == '' and not Prefs['HUE_LIGHTS_' + str(j)] == '' and not Prefs['PLEX_AUTHORIZED_USERS_' + str(j)] == '':
 			room= {}
 			room['client'] = Prefs['PLEX_CLIENT_' + str(j)]
-			room['lights'] = [x for x in pattern.split(Prefs['HUE_LIGHTS_' + str(j)]) if x]
+			#room['lights'] = [x for x in pattern.split(Prefs['HUE_LIGHTS_' + str(j)]) if x]
+			lights = [x for x in pattern.split(Prefs['HUE_LIGHTS_' + str(j)]) if x]
+			onofflights = []
+			luxlights = []
+			colorlights = []
+			for light in lights:
+				#Log("Trying for light %s"% light)
+				try:
+					B.get_light(light, 'bri')
+				except:
+					onofflights.append(light)
+				else:			
+					try:
+						B.get_light(light, 'sat')
+						B.get_light(light, 'hue')
+					except:
+						luxlights.append(light)
+					else:
+						colorlights.append(light)
+			room['lights'] = colorlights
+			room['luxlights'] = luxlights
+			room['onofflights'] = onofflights
 			room['users'] = [x for x in pattern.split(Prefs['PLEX_AUTHORIZED_USERS_' + str(j)]) if x]
 			room['playing'] = Prefs['HUE_ACTION_PLAYING_' + str(j)]
 			room['paused'] = Prefs['HUE_ACTION_PAUSED_' + str(j)]
@@ -420,14 +477,38 @@ def ReturnClients():
 	return client_list
 
 ####################################################################################################
-# Return all lights attached a specific client
+# Return all color lights attached a specific client
 ####################################################################################################
 
-def ReturnLightsFromClient(client_name, room):
+def ReturnColorLightsFromClient(client_name, room):
 	lights_list = []
 	for clients in rooms:
 		if clients['client'] == client_name and clients['room'] == room:
 			for light in clients['lights']:
+				lights_list.append(light)
+	return lights_list
+
+####################################################################################################
+# Return all Lux lights attached a specific client
+####################################################################################################
+
+def ReturnLuxLightsFromClient(client_name, room):
+	lights_list = []
+	for clients in rooms:
+		if clients['client'] == client_name and clients['room'] == room:
+			for light in clients['luxlights']:
+				lights_list.append(light)
+	return lights_list
+
+####################################################################################################
+# Return all On Off lights attached a specific client
+####################################################################################################
+
+def ReturnOnOffLightsFromClient(client_name, room):
+	lights_list = []
+	for clients in rooms:
+		if clients['client'] == client_name and clients['room'] == room:
+			for light in clients['onofflights']:
 				lights_list.append(light)
 	return lights_list
 
@@ -441,6 +522,48 @@ def ReturnAllLights():
 		for light in clients['lights']:
 			if not light in lights_list:
 				lights_list.append(light)
+		for luxlight in clients['luxlights']:
+			if not luxlight in lights_list:
+				lights_list.append(luxlight)
+		for onofflight in clients['onofflights']:
+			if not onofflight in lights_list:
+				lights_list.append(onofflight)
+	return lights_list
+
+####################################################################################################
+# Return the list of all color lights
+####################################################################################################
+
+def ReturnColorLights():
+	lights_list = []
+	for clients in rooms:
+		for light in clients['lights']:
+			if not light in lights_list:
+				lights_list.append(light)
+	return lights_list
+
+####################################################################################################
+# Return the list of all lux lights
+####################################################################################################
+
+def ReturnLuxLights():
+	lights_list = []
+	for clients in rooms:
+		for luxlight in clients['luxlights']:
+			if not luxlight in lights_list:
+				lights_list.append(luxlight)
+	return lights_list
+
+####################################################################################################
+# Return the list of all lux lights
+####################################################################################################
+
+def ReturnOnOffLights():
+	lights_list = []
+	for clients in rooms:
+		for onofflight in clients['onofflights']:
+			if not onofflight in lights_list:
+				lights_list.append(onofflight)
 	return lights_list
 
 ####################################################################################################
