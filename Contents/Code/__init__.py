@@ -12,7 +12,6 @@ import threading
 import random
 from astral import Astral
 import pytz
-
 import xml.etree.ElementTree as ElementTree
 	
 ####################################################################################################
@@ -283,9 +282,6 @@ class Hue:
 		B = Bridge(Prefs['HUE_BRIDGE_IP'], Dict['HUE_USERNAME'])
 		Log("Bridge found: " + str(B))
 
-		#Log("-Getting available lights")
-		#self.get_hue_light_groups()
-
 	def get_hue_light_groups(self):
 		Log("-Getting available lights")
 		lights = B.lights
@@ -315,7 +311,6 @@ class Hue:
 			dico[light] = line
 		LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)] = dico
 		Log(dico)
-		#return dico
 
 	def update_light_state(self, powered, brightness, client_name, room):
 		Log("--Updating lights")
@@ -333,16 +328,14 @@ class Hue:
 		lights = ReturnColorLightsFromClient(client_name, room)
 		luxlights = ReturnLuxLightsFromClient(client_name, room)
 		onofflights = ReturnOnOffLightsFromClient(client_name, room)
-		Log(B.set_light(lights, command))
-		Log(B.set_light(luxlights, command_lux))
-		Log(B.set_light(onofflights, command_onoff))
+		Log("updating color lights: %s"% B.set_light(lights, command))
+		Log("updating lux lights: %s"% B.set_light(luxlights, command_lux))
+		Log("updating on/off lights: %s"% B.set_light(onofflights, command_onoff))
 
 	def reset_lights_state(self, client_name, room):
 		Log("--Reset lights")
 		lights = LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)]
-		#Log("lights : %s" % lights)
 		for light in lights:
-			#Log("light : %s" % light)
 			try:
 				lights[light]['bri']
 			except:
@@ -412,13 +405,11 @@ def CompileRooms():
 		if Prefs['HUE_ROOM_' + str(j)] is True and not Prefs['PLEX_CLIENT_' + str(j)] == '' and not Prefs['HUE_LIGHTS_' + str(j)] == '' and not Prefs['PLEX_AUTHORIZED_USERS_' + str(j)] == '':
 			room= {}
 			room['client'] = Prefs['PLEX_CLIENT_' + str(j)]
-			#room['lights'] = [x for x in pattern.split(Prefs['HUE_LIGHTS_' + str(j)]) if x]
 			lights = [x for x in pattern.split(Prefs['HUE_LIGHTS_' + str(j)]) if x]
 			onofflights = []
 			luxlights = []
 			colorlights = []
 			for light in lights:
-				#Log("Trying for light %s"% light)
 				try:
 					B.get_light(light, 'bri')
 				except:
@@ -441,6 +432,7 @@ def CompileRooms():
 			room['dim'] = Prefs['HUE_DIM_' + str(j)]
 			room['randomize'] = Prefs['HUE_RANDOMIZE_' + str(j)]
 			room['dark'] = Prefs['HUE_DARK_' + str(j)]
+			room['min_duration'] = Prefs['PLEX_DURATION_' + str(j)]
 			room['room'] = j
 			rooms.append(room)
 			Log("Adding room %s to rooms .." %j)
@@ -455,25 +447,25 @@ def CompileRooms():
 ####################################################################################################
 
 def InitiateCurrentStatus():
-	Log("Initiating current status")
-	global CURRENT_STATUS, LIGHT_GROUPS_INITIAL_STATE
+	Log("Initiating current status, lights initial states and durations for active rooms")
+	global CURRENT_STATUS, LIGHT_GROUPS_INITIAL_STATE, DURATIONS
 	CURRENT_STATUS = {}
+	DURATIONS = {}
 	LIGHT_GROUPS_INITIAL_STATE = {}
-	for room, client in ReturnClients().iteritems():
-		CURRENT_STATUS[client + str(room)] = ''
+	for room, client_name in ReturnClients().iteritems():
+		CURRENT_STATUS[client_name + str(room)] = ''
+		DURATIONS[client_name + str(room)] = ''
 	Log(CURRENT_STATUS)
+	Log(DURATIONS)
 
 ####################################################################################################
 # Return all configured clients from preferences
 ####################################################################################################
 
 def ReturnClients():
-	#client_list = []
 	client_list = {}
 	for clients in rooms:
-		#client_list.append(clients['client'])
 		client_list[clients['room']] = clients['client']
-	#Log(client_list)
 	return client_list
 
 ####################################################################################################
@@ -578,7 +570,6 @@ def ReturnUsersFromClient(client_name, room):
 				users_list.append(light)
 	return users_list
 
-
 ####################################################################################################
 # Return a specific setting from a given client
 ####################################################################################################
@@ -597,11 +588,7 @@ def run_websocket_watcher():
 	global ws
 	Log('Starting websocket listener')
 	websocket.enableTrace(True)
-	ws = websocket.WebSocketApp("ws://" + Prefs['PLEX_ADDRESS'] + "/:/websockets/notifications?X-Plex-Token=" + ACCESS_TOKEN,
-		on_message = on_message)
-		# on_error = on_error,
-		# on_close = on_close)
-	# ws.on_open = on_open
+	ws = websocket.WebSocketApp("ws://" + Prefs['PLEX_ADDRESS'] + "/:/websockets/notifications?X-Plex-Token=" + ACCESS_TOKEN, on_message = on_message)
 	Log("Up and running, listening")
 	ws.run_forever()
 
@@ -620,6 +607,55 @@ def on_close(ws):
 	Log("### closed ###")
 
 ####################################################################################################
+# Get currently playing item duration
+####################################################################################################
+
+def get_playing_item_duration(video, client_name, room):
+	for stream in video.iter('Stream'):
+		if stream.get('duration'):
+			duration = int(stream.get('duration'))
+			DURATIONS[client_name + str(room)] = duration
+	return duration
+
+####################################################################################################
+# Compare duration with preference
+####################################################################################################
+
+def compare_duration(duration, pref):
+	if pref == "Disabled":
+		Log("Duration pref is disabled: triggering")
+		return True
+	else:
+		if pref == "1 minute":
+			compared = 1 * 60 * 1000
+		elif pref == "5 minutes":
+			compared = 5 * 60 * 1000
+		elif pref == "15 minutes":
+			compared = 15 * 60 * 1000
+		elif pref == "25 minutes":
+			compared = 25 * 60 * 1000
+		elif pref == "35 minutes":
+			compared = 35 * 60 * 1000
+		elif pref == "45 minutes":
+			compared = 45 * 60 * 1000
+		elif pref == "55 minutes":
+			compared = 55 * 60 * 1000
+		elif pref == "1 hour":
+			compared = 60 * 60 * 1000
+		elif pref == "1 hour and 20 minutes":
+			compared = 80 * 60 * 1000
+		elif pref == "1 hour and 40 minutes":
+			compared = 100 * 60 * 1000
+		elif pref == "2 hours":
+			compared = 120 * 60 * 1000
+		if duration > compared:
+			Log("Duration is greater than preferences: triggering")
+			return True
+		else:
+			Log("Duration is shorter than preferences: not triggering")
+			return False
+
+####################################################################################################
 # Parse PMS sessions status
 ####################################################################################################
 
@@ -630,39 +666,29 @@ def is_plex_playing(plex_status):
 	for item in plex_status.findall('Video'):
 		for room, client_name in configuredclients.iteritems():
 			if item.find('Player').get('title') == client_name:
-				#Log('Ok')
 				client_name_room = client_name + str(room)
 				if not client_name_room in ACTIVE_CLIENTS:
 					ACTIVE_CLIENTS.append(client_name_room)
 				configuredusers = ReturnUsersFromClient(client_name, room)
 				for username in configuredusers:
-					#Log("Ok2")
 					if item.find('User').get('title') == username:
-						#Log("Ok3")
 						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
-							#Log("Ok4")
 							if  CURRENT_STATUS[client_name + str(room)] == '':
-								#Log("Ok5")
 								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
 								hue.get_hue_light_initial_state(client_name, room)
-							#Log("Ok6")
 							CURRENT_STATUS[client_name + str(room)] = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
-							if isitdark(client_name, room) is True:
-								#Log("Ok7")
+							if isitdark(client_name, room) is True and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
 								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room)
-							#return False
 							somethingwasdone = True
 						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
 							if  CURRENT_STATUS[client_name + str(room)] == '':
 								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
 								hue.get_hue_light_initial_state(client_name, room)
-								#Log("Ok8")
 							CURRENT_STATUS[client_name + str(room)] = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
-							if isitdark(client_name, room) is True:
+							if isitdark(client_name, room) is True and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
 								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room)
-							#return False
 							somethingwasdone = True
 	
 	if somethingwasdone is True:
@@ -675,8 +701,60 @@ def is_plex_playing(plex_status):
 				client_name = client_name_room[:-1]
 				room = int(client_name_room[-1:])
 				Log(time.strftime("%I:%M:%S") + " - Playback stopped on %s in room %s - Waiting for new playback" % (client_name, room));
-				if isitdark(client_name, room) is True:
+				if isitdark(client_name, room) is True and compare_duration(duration=DURATIONS[client_name_room], pref=ReturnFromClient(client_name, "min_duration", room)) is True:
 					choose_action("stopped", client_name, room)
+					DURATIONS[client_name_room] = ''
+
+####################################################################################################
+# Wait 1.5 second when media ends to see if it should trigger the stopped action
+####################################################################################################
+
+def is_plex_playing_again(client_name="Florents-MacBook-Pro2"):
+	Log("gnaa")
+	time.sleep(1.5)
+	Log("OkKKk")
+	z = plex.get_plex_status()
+	for item in z.findall('Video'):
+		Log(item)
+		if item.find('Player').get('title') == client_name:
+			again = True
+			Log("Play is playing again")
+			return
+	Log("Play is not playing again")
+
+####################################################################################################
+# Parse PlayQueue to see if media is the last of the current playlist
+####################################################################################################
+
+def check_playqueue(client_name="Florents-MacBook-Pro2"):
+	r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/clients?X-Plex-Token=' + ACCESS_TOKEN)
+	e = ElementTree.fromstring(r.text.encode('utf-8'))
+	for client in e.findall('Server'):
+		if client.get('name') == client_name:
+			machineIdentifier = client.get('machineIdentifier')
+			r2 = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/playQueues?X-Plex-Token=' + ACCESS_TOKEN + '&X-Plex-Client-Identifier=' + machineIdentifier)
+			e2 = ElementTree.fromstring(r2.text.encode('utf-8'))
+			for playqueue in e2.findall('PlayQueue'):
+				if playqueue.get('clientIdentifier') == machineIdentifier:
+					playqueue_id = playqueue.get('id')
+					playqueue_nb = playqueue.get('totalItemsCount')
+					r3 = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/playQueues/' + playqueue_id + '?X-Plex-Token=' + ACCESS_TOKEN + '&X-Plex-Client-Identifier=' + machineIdentifier + '&X-Plex-Container-Start=0&X-Plex-Container-Size=500')
+					e3 = ElementTree.fromstring(r3.text.encode('utf-8'))
+					last = e3.find('.//Video[last()]').get('key')
+					Log(last)
+	z = plex.get_plex_status()
+	for item in z.findall('Video'):
+		Log(item)
+		if item.find('Player').get('title') == client_name:
+			current = item.get('key')
+			Log(current)
+	if last == current:
+		Log("This is the last of the playqueue")
+		return True
+	else:
+		Log("Not the last of the playqueue")
+		return False
+
 
 ####################################################################################################
 # Choose action based on playback status and preferences
