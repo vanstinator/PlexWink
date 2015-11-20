@@ -312,19 +312,19 @@ class Hue:
 		LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)] = dico
 		Log(dico)
 
-	def update_light_state(self, powered, brightness, client_name, room):
+	def update_light_state(self, powered, brightness, client_name, room, transitiontime):
 		Log("--Updating lights")
-		command =  {'on' : powered, 'bri' : brightness}
-		command_lux = {'on' : powered, 'bri' : brightness}
-		command_onoff = {'on' : powered}
+		command =  {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
+		command_lux = {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
+		command_onoff = {'on' : powered, 'transitiontime' : transitiontime}
 		if ReturnFromClient(client_name, "randomize", room) is True and powered is True:
 			Log("---Randomizing")
 			hue = random.randint(0,65535)
 			sat = random.randint(100,254)
-			command =  {'on' : powered, 'bri' : brightness, 'sat': sat, 'hue': hue}
+			command =  {'on' : powered, 'bri' : brightness, 'sat': sat, 'hue': hue, 'transitiontime' : transitiontime}
 		if powered is False:
-			command =  {'on' : powered}
-			command_lux = {'on' : powered}
+			command =  {'on' : powered, 'transitiontime' : transitiontime}
+			command_lux = {'on' : powered, 'transitiontime' : transitiontime}
 		lights = ReturnColorLightsFromClient(client_name, room)
 		luxlights = ReturnLuxLightsFromClient(client_name, room)
 		onofflights = ReturnOnOffLightsFromClient(client_name, room)
@@ -429,6 +429,10 @@ def CompileRooms():
 			room['playing'] = Prefs['HUE_ACTION_PLAYING_' + str(j)]
 			room['paused'] = Prefs['HUE_ACTION_PAUSED_' + str(j)]
 			room['stopped'] = Prefs['HUE_ACTION_STOPPED_' + str(j)]
+			room['transition_start'] = Prefs['HUE_TRANSITION_START_' + str(j)]
+			room['transition_paused'] = Prefs['HUE_TRANSITION_PAUSED_' + str(j)]
+			room['transition_resumed'] = Prefs['HUE_TRANSITION_RESUMED_' + str(j)]
+			room['transition_stopped'] = Prefs['HUE_TRANSITION_STOPPED_' + str(j)]
 			room['dim'] = Prefs['HUE_DIM_' + str(j)]
 			room['randomize'] = Prefs['HUE_RANDOMIZE_' + str(j)]
 			room['dark'] = Prefs['HUE_DARK_' + str(j)]
@@ -656,6 +660,42 @@ def compare_duration(duration, pref):
 			return False
 
 ####################################################################################################
+# Compare duration with preference
+####################################################################################################
+
+def get_transition_time(pref):
+	if pref == "0 ms":
+		transitiontime = 0
+	elif pref == "400 ms":
+		transitiontime = 4
+	elif pref == "1 sec":
+		transitiontime = 1 * 10
+	elif pref == "2 secs":
+		transitiontime = 2 * 10
+	elif pref == "3 secs":
+		transitiontime = 3 * 10
+	elif pref == "5 secs":
+		transitiontime = 5 * 10
+	elif pref == "10 secs":
+		transitiontime = 10 * 10
+	elif pref == "15 secs":
+		transitiontime = 15 * 10
+	elif pref == "30 secs":
+		transitiontime = 30 * 10
+	elif pref == "45 secs":
+		transitiontime = 45 * 10
+	elif pref == "1 min":
+		transitiontime = 60 * 10
+	elif pref == "2 mins":
+		transitiontime = 120 * 10
+	elif pref == "5 mins":
+		transitiontime = 300 * 10
+	else:
+		transitiontime = 4
+	Log("Transition time set to %s"%transitiontime)
+	return transitiontime
+
+####################################################################################################
 # Parse PMS sessions status
 ####################################################################################################
 
@@ -673,22 +713,26 @@ def is_plex_playing(plex_status):
 				for username in configuredusers:
 					if item.find('User').get('title') == username:
 						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
+							transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_resumed", room))
 							if  CURRENT_STATUS[client_name + str(room)] == '':
 								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
 								hue.get_hue_light_initial_state(client_name, room)
+								transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_start", room))
 							CURRENT_STATUS[client_name + str(room)] = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
 							if isitdark(client_name, room) is True and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
-								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room)
+								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room, transitiontime)
 							somethingwasdone = True
 						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
+							transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_paused", room))
 							if  CURRENT_STATUS[client_name + str(room)] == '':
 								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
 								hue.get_hue_light_initial_state(client_name, room)
+								transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_start", room))
 							CURRENT_STATUS[client_name + str(room)] = item.find('Player').get('state')
 							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
 							if isitdark(client_name, room) is True and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
-								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room)
+								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room, transitiontime)
 							somethingwasdone = True
 	
 	if somethingwasdone is True:
@@ -701,8 +745,9 @@ def is_plex_playing(plex_status):
 				client_name = client_name_room[:-1]
 				room = int(client_name_room[-1:])
 				Log(time.strftime("%I:%M:%S") + " - Playback stopped on %s in room %s - Waiting for new playback" % (client_name, room));
+				transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_stopped", room))
 				if isitdark(client_name, room) is True and compare_duration(duration=DURATIONS[client_name_room], pref=ReturnFromClient(client_name, "min_duration", room)) is True:
-					choose_action("stopped", client_name, room)
+					choose_action("stopped", client_name, room, transitiontime)
 					DURATIONS[client_name_room] = ''
 
 ####################################################################################################
@@ -760,21 +805,21 @@ def check_playqueue(client_name="Florents-MacBook-Pro2"):
 # Choose action based on playback status and preferences
 ####################################################################################################
 
-def choose_action(state, client_name, room):
-	Log("Selecting action")
+def choose_action(state, client_name, room, transitiontime):
+	Log("Selecting action with transitiontime %s"%transitiontime)
 	if ReturnFromClient(client_name, state, room) == "Turn Off":
-		turn_off_lights(client_name, room)
+		turn_off_lights(client_name, room, transitiontime)
 		pass
 	elif ReturnFromClient(client_name, state, room) == "Turn On":
-		turn_on_lights(client_name, room)
+		turn_on_lights(client_name, room, transitiontime)
 		pass
 	elif ReturnFromClient(client_name, state, room) == "Dim":
-		dim_lights(client_name, room)
+		dim_lights(client_name, room, transitiontime)
 	elif ReturnFromClient(client_name, state, room) == "Nothing":
 		Log("Doing nothing")
 		pass
 	elif ReturnFromClient(client_name, state, room) == "Reset":
-		reset_lights(client_name, room)
+		reset_lights(client_name, room, transitiontime)
 		pass
 	else:
 		Log("No matching action found")
@@ -812,23 +857,23 @@ def isitdark(client_name, room):
 # Execute lights actions
 ####################################################################################################
 
-def reset_lights(client_name, room):
+def reset_lights(client_name, room, transitiontime):
 	Log("Reseting lights")
 	hue.reset_lights_state(client_name, room)
 	pass
 
-def turn_off_lights(client_name, room):
+def turn_off_lights(client_name, room, transitiontime):
 	Log("Turning off lights")
-	hue.update_light_state(powered=False, brightness=254, client_name=client_name, room=room)
+	hue.update_light_state(powered=False, brightness=254, client_name=client_name, room=room, transitiontime=transitiontime)
 	pass
 
-def turn_on_lights(client_name, room):
+def turn_on_lights(client_name, room, transitiontime):
 	Log("Turning on lights")
-	hue.update_light_state(powered=True, brightness=254, client_name=client_name, room=room)
+	hue.update_light_state(powered=True, brightness=254, client_name=client_name, room=room, transitiontime=transitiontime)
 	pass
 
-def dim_lights(client_name, room):
+def dim_lights(client_name, room, transitiontime):
 	Log("Dimming lights")
 	dim_value = ReturnFromClient(client_name, "dim", room)
-	hue.update_light_state(powered=True, brightness=int(float(dim_value)), client_name=client_name, room=room)
+	hue.update_light_state(powered=True, brightness=int(float(dim_value)), client_name=client_name, room=room, transitiontime=transitiontime)
 	pass

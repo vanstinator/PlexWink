@@ -117,6 +117,90 @@
     "default": "20"
     },
     {
+        "id": "HUE_TRANSITION_START_1",
+        "label": "Transition time when playback starts in room 1",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_PAUSED_1",
+        "label": "Transition time when playback pauses in room 1",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_RESUMED_1",
+        "label": "Transition time when playback resumes in room 1",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_STOPPED_1",
+        "label": "Transition time when playback stops in room 1",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
         "id": "HUE_RANDOMIZE_1",
         "label": "Randomize hue and saturation on Dim/Turn On in room 1",
         "type": "bool",
@@ -229,6 +313,90 @@
           "240"
         ],
     "default": "20"
+    },
+    {
+        "id": "HUE_TRANSITION_START_2",
+        "label": "Transition time when playback starts in room 2",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_PAUSED_2",
+        "label": "Transition time when playback pauses in room 2",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_RESUMED_2",
+        "label": "Transition time when playback resumes in room 2",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_STOPPED_2",
+        "label": "Transition time when playback stops in room 2",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
     },
     {
         "id": "HUE_RANDOMIZE_2",
@@ -345,6 +513,90 @@
     "default": "20"
     },
     {
+        "id": "HUE_TRANSITION_START_3",
+        "label": "Transition time when playback starts in room 3",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_PAUSED_3",
+        "label": "Transition time when playback pauses in room 3",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_RESUMED_3",
+        "label": "Transition time when playback resumes in room 3",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_STOPPED_3",
+        "label": "Transition time when playback stops in room 3",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
         "id": "HUE_RANDOMIZE_3",
         "label": "Randomize hue and saturation on Dim/Turn On in room 3",
         "type": "bool",
@@ -459,6 +711,90 @@
     "default": "20"
     },
     {
+        "id": "HUE_TRANSITION_START_4",
+        "label": "Transition time when playback starts in room 4",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_PAUSED_4",
+        "label": "Transition time when playback pauses in room 4",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_RESUMED_4",
+        "label": "Transition time when playback resumes in room 4",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_STOPPED_4",
+        "label": "Transition time when playback stops in room 4",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
         "id": "HUE_RANDOMIZE_4",
         "label": "Randomize hue and saturation on Dim/Turn On in room 4",
         "type": "bool",
@@ -571,6 +907,90 @@
           "240"
         ],
     "default": "20"
+    },
+    {
+        "id": "HUE_TRANSITION_START_5",
+        "label": "Transition time when playback starts in room 5",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_PAUSED_5",
+        "label": "Transition time when playback pauses in room 5",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_RESUMED_5",
+        "label": "Transition time when playback resumes in room 5",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "HUE_TRANSITION_STOPPED_5",
+        "label": "Transition time when playback stops in room 5",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
     },
     {
         "id": "HUE_RANDOMIZE_5",
