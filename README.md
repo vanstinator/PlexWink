@@ -21,6 +21,9 @@ One room is composed of **one client**, **one or multiple users** and **one or m
 * ```Plex Server Address``` is the local adress to reach your server.
 * ```Philips Hue Bridge Address``` is the ip address of your Philips Bridge.
 * ```Nearest city from your location``` Used to calculate to calculate sunrise/sunset hours at your location.
+* ```Preset 1, color (hex): #``` hexadecimal color value for lights preset 1 (don't write the #).
+* ```Preset 1, brightness:``` brightness value for lights preset 1.
+* ...
 * ```Activate HelloHue in room 1``` Tick to activate room 1 (and fill the client, users and lights settings for room 1).
 * ```Name of plex client able to trigger in room 1``` You can find the list of users in PMS -> settings -> devices. Only put ONE client per room. If your have two clients in the same room, activate an other room and fill the settings with the other clients name and the same lights names.
 * ```Name of the users able to trigger in room 1``` You can find the list of users in PMS -> settings -> users -> myhome. You can put multiple users (comma separated values, case sensitive).

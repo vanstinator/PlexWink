@@ -35,6 +35,90 @@
     "default": "Paris"
     },
     {
+        "id": "HUE_PRESET_1_HEX",
+        "label": "Preset 1, color (hex): #",
+        "type": "text",
+        "default": "FF0000"
+    },
+    {
+        "id": "HUE_PRESET_1_BRI",
+        "label": "Preset 1, brightness:",
+        "type": "enum",
+        "values": [
+          "0",
+          "20",
+          "40",
+          "60",
+          "80",
+          "100",
+          "120",
+          "140",
+          "160",
+          "180",
+          "200",
+          "220",
+          "240",
+          "255"
+        ],
+    "default": "200"
+    },
+    {
+        "id": "HUE_PRESET_2_HEX",
+        "label": "Preset 2, color (hex): #",
+        "type": "text",
+        "default": "FF0000"
+    },
+    {
+        "id": "HUE_PRESET_2_BRI",
+        "label": "Preset 2, brightness:",
+        "type": "enum",
+        "values": [
+          "0",
+          "20",
+          "40",
+          "60",
+          "80",
+          "100",
+          "120",
+          "140",
+          "160",
+          "180",
+          "200",
+          "220",
+          "240",
+          "255"
+        ],
+    "default": "200"
+    },
+    {
+        "id": "HUE_PRESET_3_HEX",
+        "label": "Preset 3, color (hex): #",
+        "type": "text",
+        "default": "FF0000"
+    },
+    {
+        "id": "HUE_PRESET_3_BRI",
+        "label": "Preset 3, brightness:",
+        "type": "enum",
+        "values": [
+          "0",
+          "20",
+          "40",
+          "60",
+          "80",
+          "100",
+          "120",
+          "140",
+          "160",
+          "180",
+          "200",
+          "220",
+          "240",
+          "255"
+        ],
+    "default": "200"
+    },
+    {
         "id": "HUE_ROOM_1",
         "label": "Activate HelloHue in room 1",
         "type": "bool",
@@ -66,7 +150,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Turn Off"
     },
@@ -79,7 +166,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Dim"
     },
@@ -92,7 +182,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Nothing"
     },
@@ -101,6 +194,7 @@
         "label": "Choose dim value in room 1:",
         "type": "enum",
         "values": [
+          "0",
           "20",
           "40",
           "60",
@@ -112,7 +206,8 @@
           "180",
           "200",
           "220",
-          "240"
+          "240",
+          "255"
         ],
     "default": "20"
     },
@@ -264,7 +359,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Turn Off"
     },
@@ -277,7 +375,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Dim"
     },
@@ -290,7 +391,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Nothing"
     },
@@ -299,6 +403,7 @@
         "label": "Choose dim value in room 2:",
         "type": "enum",
         "values": [
+          "0",
           "20",
           "40",
           "60",
@@ -310,7 +415,8 @@
           "180",
           "200",
           "220",
-          "240"
+          "240",
+          "255"
         ],
     "default": "20"
     },
@@ -462,7 +568,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Turn Off"
     },
@@ -475,7 +584,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Dim"
     },
@@ -488,7 +600,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Nothing"
     },
@@ -497,6 +612,7 @@
         "label": "Choose dim value in room 3:",
         "type": "enum",
         "values": [
+          "0",
           "20",
           "40",
           "60",
@@ -508,7 +624,8 @@
           "180",
           "200",
           "220",
-          "240"
+          "240",
+          "255"
         ],
     "default": "20"
     },
@@ -660,7 +777,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Turn Off"
     },
@@ -673,7 +793,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Dim"
     },
@@ -686,7 +809,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Nothing"
     },
@@ -695,6 +821,7 @@
         "label": "Choose dim value in room 4:",
         "type": "enum",
         "values": [
+          "0",
           "20",
           "40",
           "60",
@@ -706,7 +833,8 @@
           "180",
           "200",
           "220",
-          "240"
+          "240",
+          "255"
         ],
     "default": "20"
     },
@@ -858,7 +986,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Turn Off"
     },
@@ -871,7 +1002,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Dim"
     },
@@ -884,7 +1018,10 @@
           "Nothing",
           "Dim",
           "Turn Off",
-          "Turn On"
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3"
         ],
     "default": "Nothing"
     },
@@ -893,6 +1030,7 @@
         "label": "Choose dim value in room 5:",
         "type": "enum",
         "values": [
+          "0",
           "20",
           "40",
           "60",
@@ -904,7 +1042,8 @@
           "180",
           "200",
           "220",
-          "240"
+          "240",
+          "255"
         ],
     "default": "20"
     },

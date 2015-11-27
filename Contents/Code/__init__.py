@@ -13,6 +13,7 @@ import random
 from astral import Astral
 import pytz
 import xml.etree.ElementTree as ElementTree
+from rgb_cie import Converter
 	
 ####################################################################################################
 
@@ -202,14 +203,14 @@ def DisableHelloHueCallback():
 ####################################################################################################
 @route(PREFIX + '/ValidatePrefs')
 def ValidatePrefs():
-
-	global auth, plex, hue
+	global auth, plex, hue, converter
 	Log('Validating Prefs')
 	auth = HueCheck().check_username()
 	if auth is False:
 		Log("Please update your Hue preferences and try again")
 	if auth is True:
 		Log("Hue username is registered... Starting!")
+		converter = Converter()
 		hue = Hue()
 		CompileRooms()
 		hue.get_hue_light_groups()
@@ -312,12 +313,14 @@ class Hue:
 		LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)] = dico
 		Log(dico)
 
-	def update_light_state(self, powered, brightness, client_name, room, transitiontime):
+	def update_light_state(self, powered, brightness, client_name, room, transitiontime, xy):
 		Log("--Updating lights")
 		command =  {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
 		command_lux = {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
 		command_onoff = {'on' : powered, 'transitiontime' : transitiontime}
-		if ReturnFromClient(client_name, "randomize", room) is True and powered is True:
+		if not xy == None:
+			command =  {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime, 'xy': xy}
+		if ReturnFromClient(client_name, "randomize", room) is True and powered is True and xy == None:
 			Log("---Randomizing")
 			hue = random.randint(0,65535)
 			sat = random.randint(100,254)
@@ -332,7 +335,7 @@ class Hue:
 		Log("updating lux lights: %s"% B.set_light(luxlights, command_lux))
 		Log("updating on/off lights: %s"% B.set_light(onofflights, command_onoff))
 
-	def reset_lights_state(self, client_name, room):
+	def reset_lights_state(self, client_name, room, transitiontime):
 		Log("--Reset lights")
 		lights = LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)]
 		for light in lights:
@@ -347,10 +350,10 @@ class Hue:
 					lights[light]['sat']
 				except:
 					Log("%s is a lux light, triggering on, bri parameters"% light)
-					command = {'on': lights[light]['on'], 'bri': lights[light]['bri']}
+					command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'transitiontime': transitiontime}
 				else:
 					Log("%s is a color light, triggering bri, on, sat, hue parameters"% light)
-					command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'hue':lights[light]['hue'], 'sat': lights[light]['sat']}
+					command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'hue':lights[light]['hue'], 'sat': lights[light]['sat'], 'transitiontime': transitiontime}
 			Log(B.set_light(light, command))
 
 ####################################################################################################
@@ -615,10 +618,9 @@ def on_close(ws):
 ####################################################################################################
 
 def get_playing_item_duration(video, client_name, room):
-	for stream in video.iter('Stream'):
-		if stream.get('duration'):
-			duration = int(stream.get('duration'))
-			DURATIONS[client_name + str(room)] = duration
+	Log("getting duration")
+	duration = int(video.get('duration'))
+	DURATIONS[client_name + str(room)] = duration
 	return duration
 
 ####################################################################################################
@@ -692,7 +694,7 @@ def get_transition_time(pref):
 		transitiontime = 300 * 10
 	else:
 		transitiontime = 4
-	Log("Transition time set to %s"%transitiontime)
+	Log("Transition time set to %s ms"%transitiontime)
 	return transitiontime
 
 ####################################################################################################
@@ -713,26 +715,10 @@ def is_plex_playing(plex_status):
 				for username in configuredusers:
 					if item.find('User').get('title') == username:
 						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
-							transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_resumed", room))
-							if  CURRENT_STATUS[client_name + str(room)] == '':
-								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
-								hue.get_hue_light_initial_state(client_name, room)
-								transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_start", room))
-							CURRENT_STATUS[client_name + str(room)] = item.find('Player').get('state')
-							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
-							if isitdark(client_name, room) is True and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
-								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room, transitiontime)
+							plex_is_playing(client_name=client_name, room=room, user=item.find('User').get('title'), gptitle=item.get('grandparentTitle'), title=item.get('title'), state=item.find('Player').get('state'), item=item, transition_type="transition_resumed")
 							somethingwasdone = True
 						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
-							transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_paused", room))
-							if  CURRENT_STATUS[client_name + str(room)] == '':
-								Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
-								hue.get_hue_light_initial_state(client_name, room)
-								transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_start", room))
-							CURRENT_STATUS[client_name + str(room)] = item.find('Player').get('state')
-							Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (item.find('User').get('title'), CURRENT_STATUS[client_name + str(room)], item.get('grandparentTitle'), item.get('title'), client_name, room))
-							if isitdark(client_name, room) is True and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
-								choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room, transitiontime)
+							plex_is_playing(client_name=client_name, room=room, user=item.find('User').get('title'), gptitle=item.get('grandparentTitle'), title=item.get('title'), state=item.find('Player').get('state'), item=item, transition_type="transition_paused")
 							somethingwasdone = True
 	
 	if somethingwasdone is True:
@@ -750,56 +736,16 @@ def is_plex_playing(plex_status):
 					choose_action("stopped", client_name, room, transitiontime)
 					DURATIONS[client_name_room] = ''
 
-####################################################################################################
-# Wait 1.5 second when media ends to see if it should trigger the stopped action
-####################################################################################################
-
-def is_plex_playing_again(client_name="Florents-MacBook-Pro2"):
-	Log("gnaa")
-	time.sleep(1.5)
-	Log("OkKKk")
-	z = plex.get_plex_status()
-	for item in z.findall('Video'):
-		Log(item)
-		if item.find('Player').get('title') == client_name:
-			again = True
-			Log("Play is playing again")
-			return
-	Log("Play is not playing again")
-
-####################################################################################################
-# Parse PlayQueue to see if media is the last of the current playlist
-####################################################################################################
-
-def check_playqueue(client_name="Florents-MacBook-Pro2"):
-	r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/clients?X-Plex-Token=' + ACCESS_TOKEN)
-	e = ElementTree.fromstring(r.text.encode('utf-8'))
-	for client in e.findall('Server'):
-		if client.get('name') == client_name:
-			machineIdentifier = client.get('machineIdentifier')
-			r2 = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/playQueues?X-Plex-Token=' + ACCESS_TOKEN + '&X-Plex-Client-Identifier=' + machineIdentifier)
-			e2 = ElementTree.fromstring(r2.text.encode('utf-8'))
-			for playqueue in e2.findall('PlayQueue'):
-				if playqueue.get('clientIdentifier') == machineIdentifier:
-					playqueue_id = playqueue.get('id')
-					playqueue_nb = playqueue.get('totalItemsCount')
-					r3 = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/playQueues/' + playqueue_id + '?X-Plex-Token=' + ACCESS_TOKEN + '&X-Plex-Client-Identifier=' + machineIdentifier + '&X-Plex-Container-Start=0&X-Plex-Container-Size=500')
-					e3 = ElementTree.fromstring(r3.text.encode('utf-8'))
-					last = e3.find('.//Video[last()]').get('key')
-					Log(last)
-	z = plex.get_plex_status()
-	for item in z.findall('Video'):
-		Log(item)
-		if item.find('Player').get('title') == client_name:
-			current = item.get('key')
-			Log(current)
-	if last == current:
-		Log("This is the last of the playqueue")
-		return True
-	else:
-		Log("Not the last of the playqueue")
-		return False
-
+def plex_is_playing(client_name, room, user, gptitle, title, state, item, transition_type):
+	transitiontime = get_transition_time(ReturnFromClient(client_name, transition_type, room))
+	if  CURRENT_STATUS[client_name + str(room)] == '':
+		Log(time.strftime("%I:%M:%S") + " - New Playback (saving initial lights state): - %s %s %s - %s on %s in room %s."% (user, CURRENT_STATUS[client_name + str(room)], gptitle, title, client_name, room))
+		hue.get_hue_light_initial_state(client_name, room)
+		transitiontime = get_transition_time(ReturnFromClient(client_name, "transition_start", room))
+	CURRENT_STATUS[client_name + str(room)] = state
+	Log(time.strftime("%I:%M:%S") + " - %s %s %s - %s on %s in room %s." % (user, CURRENT_STATUS[client_name + str(room)], gptitle, title, client_name, room))
+	if isitdark(client_name, room) is True and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
+		choose_action(CURRENT_STATUS[client_name + str(room)], client_name, room, transitiontime)
 
 ####################################################################################################
 # Choose action based on playback status and preferences
@@ -815,11 +761,21 @@ def choose_action(state, client_name, room, transitiontime):
 		pass
 	elif ReturnFromClient(client_name, state, room) == "Dim":
 		dim_lights(client_name, room, transitiontime)
-	elif ReturnFromClient(client_name, state, room) == "Nothing":
-		Log("Doing nothing")
 		pass
 	elif ReturnFromClient(client_name, state, room) == "Reset":
 		reset_lights(client_name, room, transitiontime)
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Preset 1":
+		set_light_preset(client_name, room, transitiontime, "1")
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Preset 2":
+		set_light_preset(client_name, room, transitiontime, "2")
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Preset 3":
+		set_light_preset(client_name, room, transitiontime, "2")
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Nothing":
+		Log("Doing nothing")
 		pass
 	else:
 		Log("No matching action found")
@@ -857,23 +813,33 @@ def isitdark(client_name, room):
 # Execute lights actions
 ####################################################################################################
 
+def set_light_preset(client_name, room, transitiontime, preset):
+	Log("Setting lights to preset %s"%preset)
+	try:
+		Log(converter.hexToCIE1931(Prefs['HUE_PRESET_'+ preset +'_HEX']))
+	except:
+		Log("Wrong hex color, doing nothing")
+	else:
+		hue.update_light_state(powered=True, brightness=int(Prefs['HUE_PRESET_'+ preset +'_BRI']), client_name=client_name, room=room, transitiontime=transitiontime, xy=converter.hexToCIE1931(Prefs['HUE_PRESET_'+ preset +'_HEX']))
+	pass
+
 def reset_lights(client_name, room, transitiontime):
 	Log("Reseting lights")
-	hue.reset_lights_state(client_name, room)
+	hue.reset_lights_state(client_name, room, transitiontime)
 	pass
 
 def turn_off_lights(client_name, room, transitiontime):
 	Log("Turning off lights")
-	hue.update_light_state(powered=False, brightness=254, client_name=client_name, room=room, transitiontime=transitiontime)
+	hue.update_light_state(powered=False, brightness=254, client_name=client_name, room=room, transitiontime=transitiontime, xy=None)
 	pass
 
 def turn_on_lights(client_name, room, transitiontime):
 	Log("Turning on lights")
-	hue.update_light_state(powered=True, brightness=254, client_name=client_name, room=room, transitiontime=transitiontime)
+	hue.update_light_state(powered=True, brightness=254, client_name=client_name, room=room, transitiontime=transitiontime, xy=None)
 	pass
 
 def dim_lights(client_name, room, transitiontime):
 	Log("Dimming lights")
 	dim_value = ReturnFromClient(client_name, "dim", room)
-	hue.update_light_state(powered=True, brightness=int(float(dim_value)), client_name=client_name, room=room, transitiontime=transitiontime)
+	hue.update_light_state(powered=True, brightness=int(float(dim_value)), client_name=client_name, room=room, transitiontime=transitiontime, xy=None)
 	pass
