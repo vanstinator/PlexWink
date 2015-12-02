@@ -319,6 +319,7 @@ class Hue:
 		command_lux = {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
 		command_onoff = {'on' : powered, 'transitiontime' : transitiontime}
 		if not xy == None:
+			Log("---triggering preset action")
 			command =  {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime, 'xy': xy}
 		if ReturnFromClient(client_name, "randomize", room) is True and powered is True and xy == None:
 			Log("---Randomizing")
@@ -455,12 +456,14 @@ def CompileRooms():
 
 def InitiateCurrentStatus():
 	Log("Initiating current status, lights initial states and durations for active rooms")
-	global CURRENT_STATUS, LIGHT_GROUPS_INITIAL_STATE, DURATIONS
+	global CURRENT_STATUS, CURRENT_MEDIA, LIGHT_GROUPS_INITIAL_STATE, DURATIONS
 	CURRENT_STATUS = {}
+	CURRENT_MEDIA = {}
 	DURATIONS = {}
 	LIGHT_GROUPS_INITIAL_STATE = {}
 	for room, client_name in ReturnClients().iteritems():
 		CURRENT_STATUS[client_name + str(room)] = ''
+		CURRENT_MEDIA[client_name + str(room)] = ''
 		DURATIONS[client_name + str(room)] = ''
 	Log(CURRENT_STATUS)
 	Log(DURATIONS)
@@ -694,7 +697,6 @@ def get_transition_time(pref):
 		transitiontime = 300 * 10
 	else:
 		transitiontime = 4
-	Log("Transition time set to %s ms"%transitiontime)
 	return transitiontime
 
 ####################################################################################################
@@ -714,12 +716,13 @@ def is_plex_playing(plex_status):
 				configuredusers = ReturnUsersFromClient(client_name, room)
 				for username in configuredusers:
 					if item.find('User').get('title') == username:
-						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
+						if item.find('Player').get('state') == 'playing' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state') and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
 							plex_is_playing(client_name=client_name, room=room, user=item.find('User').get('title'), gptitle=item.get('grandparentTitle'), title=item.get('title'), state=item.find('Player').get('state'), item=item, transition_type="transition_resumed")
 							somethingwasdone = True
-						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state'):
+						elif item.find('Player').get('state') == 'paused' and CURRENT_STATUS[client_name + str(room)] != item.find('Player').get('state') and compare_duration(duration=get_playing_item_duration(item, client_name, room), pref=ReturnFromClient(client_name, "min_duration", room)) is True:
 							plex_is_playing(client_name=client_name, room=room, user=item.find('User').get('title'), gptitle=item.get('grandparentTitle'), title=item.get('title'), state=item.find('Player').get('state'), item=item, transition_type="transition_paused")
 							somethingwasdone = True
+						CURRENT_MEDIA[client_name + str(room)] = item.get('key')
 	
 	if somethingwasdone is True:
 		return False
