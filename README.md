@@ -1,32 +1,68 @@
-# PlexWink
-Control your Wink lights via Plex!
+HelloHue for Plex and Philips Hue
+=================
 
-I picked up a Wink starter kit last week to automate the lights in my living/tv room with Plex. I'd like to share my script in case anyone else would find it useful.
+##### Sync and control your Philips Hue lights with Plex!
 
+**Credits**
+This Channel is based on PlexWink by vanstinator.
 
-**Behavior**
-The script attaches to the Plex Notification web socket. If it receives a playing notification it checks if it's a video, the client name, and the user who owns the stream. If it matches your criteria it triggers these actions.
+### Behavior
 
-* Playing - Dim the lights, and then shut them off
-* Paused - Dim the lights
-* Stopped - turn the lights on at full brightness
-* Nothing detected - turn the lights on at full brightness
+This channel detects when a media is playing, paused or stopped on your Plex Clients. Then it checks if it's a video, the client name, and the user who owns the stream. If it matches your criteria it triggers your lights with the actions you have set up.
+You can also turn your lights on and off inside the channel.
 
+### Configuration
 
-**Requirements**
-* Python 2.7.X
-* Requests - `pip install requests`
-* websocket-client - `pip install websocket-client`
-* Code - https://github.com/vanstinator/PlexWink
+The config is pretty simple and only needs to be done once. Configure your settings following the details below.
+One room is composed of **one client**, **one or multiple users** and **one or multiple lights**, as well as the actions : on play, on stop, on pause, dim value, and only trigger if it's dark outside.
 
-The config file is pretty simple. Fill out your plex login credentials, your wink credentials, and your wink API credentials. You can get the API keys by email support@winkapp.com and asking for a set.
+* ```Plex.tv login``` is your Plex login.
+* ```Plex.tv passwords``` is your Plex password. It is only sent to plex.tv to get an identification token (so you must have a working internet access).
+* ```Plex Server Address``` is the local adress to reach your server.
+* ```Philips Hue Bridge Address``` is the ip address of your Philips Bridge.
+* ```Nearest city from your location``` Used to calculate to calculate sunrise/sunset hours at your location.
+* ```Preset 1, color (hex): #``` hexadecimal color value for lights preset 1 (don't write the #).
+* ```Preset 1, brightness:``` brightness value for lights preset 1.
+* ...
+* ```Activate HelloHue in room 1``` Tick to activate room 1 (and fill the client, users and lights settings for room 1).
+* ```Name of plex client able to trigger in room 1``` You can find the list of users in PMS -> settings -> devices. Only put ONE client per room. If your have two clients in the same room, activate an other room and fill the settings with the other clients name and the same lights names.
+* ```Name of the users able to trigger in room 1``` You can find the list of users in PMS -> settings -> users -> myhome. You can put multiple users (comma separated values, case sensitive).
+* ```Name of the lights to trigger in room 1``` is the list of lights that will be triggered in room 1. You can put multiple users (comma separated values, case sensitive).
+* ```When a media is playing in room 1``` is the action that will fire when a media is playing in room 1.
+* ```When a media is paused in room 1``` is the action that will fire when a media is paused in room 1.
+* ```When a media is stopped in room 1``` is the action that will fire when a media is stopped in room 1.
+* ```Choose dim value in room 1``` is the value your lights will dim to. (20 is the min brightness and 240 is max)
+* ```Randomize hue and saturation on Dim/Turn On in room 1``` will randomize your light color each time the action turn on or dim is fired.
+* ```Only trigger lights if it's dark outside in room 1``` Tick to only trigger your lights between sunrise and sunset.
+* ```Activate HelloHue in room 2``` Same thing as ```Activate HelloHue in room 1``` ...
+* ...
 
-`PLEX_CLIENTs` is the list of names of the clients to monitor. Mine are ['Living Room', 'PlexMediaPlayer']
+### Usage
 
-`WINK_ACTION_GROUPS` is the list of Wink group names for your light bulbs. Mine are ['Entryway Hallway', 'Living Room']
+**How to install:**
+* go to ```Library/Application Support/Plex Media Server/Plug-ins/```
+* If existing, delete ```HelloHue.bundle```
+* get the release you want from *https://github.com/ledge74/HelloHue/releases*
+* unzip the release
+* restart your plex media server!!!
+* more indepth: see [article](https://support.plex.tv/hc/en-us/articles/201187656-How-do-I-manually-install-a-channel-) on Plex website. 
 
-Both of those parameters are case and white-space sensitive, so match exactly what each respective application has.
+**On first run:**
 
-**Roadmap**
-* Wink users should sympathize with this, but sometimes a bulb gets "stuck". So I'm planning to add some logic to check for that and force it to the correct state.
-* Any other user requested things I don't think of.
+1. Configure your Channel preferences (see above for help, make sure that you are connected to the internet as the channel will request a token from plex.tv)
+2. Go to the channel (on any device)
+3. If you see, ```Press button and your bridge and click to connect``` click on this menu AFTER having pressed the physical button of your bridge.
+4. The click on ```Advanced``` --> ```Restart HelloHue```
+5. If you see the menu ```My Lights``` then you are all good!
+6. Enjoy :)
+
+**Use the channel:**
+
+* ```My Lights``` allows you to trigger your lights from the channel
+* ```Enable HelloHue``` disable the channel (stop listening to items being played)
+* ```Disable HelloHue``` resumes the channel (start listening to items being played)
+* ```Advanced``` --> ```Restart HelloHue`` takes into account your new Plex.TV login/password if you updated it in the channel settings.
+
+### How to report a bug and ask for features
+
+If you have a problem with this channel, raise an issue on GitHub or on the [Plex Forums](https://forums.plex.tv/discussion/193095/rel-hellohue-control-your-philips-hue-lights-via-plex). Don't forget to add a Log file of this channel : https://support.plex.tv/hc/en-us/articles/200250417-Plex-Media-Server-Log-Files
