@@ -66,3 +66,12 @@ One room is composed of **one client**, **one or multiple users** and **one or m
 ### How to report a bug and ask for features
 
 If you have a problem with this channel, raise an issue on GitHub or on the [Plex Forums](https://forums.plex.tv/discussion/193095/rel-hellohue-control-your-philips-hue-lights-via-plex). Don't forget to add a Log file of this channel : https://support.plex.tv/hc/en-us/articles/200250417-Plex-Media-Server-Log-Files
+
+### Support the project
+I've developed HelloHue on my free time, so if you like it please think about buying me a beer!
+
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif "")
+](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WZTWSG87P9G8E "https://paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WZTWSG87P9G8E")
+
+[![](https://15254b2dcaab7f5478ab-24461f391e20b7336331d5789078af53.ssl.cf1.rackcdn.com/plex.vanillacommunity.com/editor/w9/hhy6994k9ncb.png "")
+](https://www.changetip.com/tipme/ledge74 "https://www.changetip.com/tipme/ledge74")
