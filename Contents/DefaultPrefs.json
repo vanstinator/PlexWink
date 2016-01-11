@@ -119,6 +119,62 @@
     "default": "200"
     },
     {
+        "id": "HUE_PRESET_4_HEX",
+        "label": "Preset 4, color (hex): #",
+        "type": "text",
+        "default": "FF0000"
+    },
+    {
+        "id": "HUE_PRESET_4_BRI",
+        "label": "Preset 4, brightness:",
+        "type": "enum",
+        "values": [
+          "0",
+          "20",
+          "40",
+          "60",
+          "80",
+          "100",
+          "120",
+          "140",
+          "160",
+          "180",
+          "200",
+          "220",
+          "240",
+          "255"
+        ],
+    "default": "200"
+    },
+    {
+        "id": "HUE_PRESET_5_HEX",
+        "label": "Preset 5, color (hex): #",
+        "type": "text",
+        "default": "FF0000"
+    },
+    {
+        "id": "HUE_PRESET_5_BRI",
+        "label": "Preset 5, brightness:",
+        "type": "enum",
+        "values": [
+          "0",
+          "20",
+          "40",
+          "60",
+          "80",
+          "100",
+          "120",
+          "140",
+          "160",
+          "180",
+          "200",
+          "220",
+          "240",
+          "255"
+        ],
+    "default": "200"
+    },
+    {
         "id": "HUE_ROOM_1",
         "label": "Activate HelloHue in room 1",
         "type": "bool",
@@ -140,7 +196,13 @@
         "id": "HUE_LIGHTS_1",
         "label": "Name of the lights to trigger in room 1 (comma separated, case sensitive)",
         "type": "text",
-        "default": "LivingColors 1, LivingColors 2"
+        "default": "Light 1, Light 2"
+    },
+    {
+        "id": "HUE_GROUPS_1",
+        "label": "Name of the groups to trigger in room 1 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "Group 1, Group 2"
     },
     {
         "id": "HUE_ACTION_PLAYING_1",
@@ -153,7 +215,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Turn Off"
     },
@@ -169,7 +233,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Dim"
     },
@@ -185,7 +251,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Nothing"
     },
@@ -349,7 +417,13 @@
         "id": "HUE_LIGHTS_2",
         "label": "Name of the lights to trigger in room 2 (comma separated, case sensitive)",
         "type": "text",
-        "default": "LivingColors 3, LivingColors 4"
+        "default": "Light 1, Light 2"
+    },
+    {
+        "id": "HUE_GROUPS_2",
+        "label": "Name of the groups to trigger in room 2 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "Group 1, Group 2"
     },
     {
         "id": "HUE_ACTION_PLAYING_2",
@@ -362,7 +436,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Turn Off"
     },
@@ -378,7 +454,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Dim"
     },
@@ -394,7 +472,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Nothing"
     },
@@ -558,7 +638,13 @@
         "id": "HUE_LIGHTS_3",
         "label": "Name of the lights to trigger in room 3 (comma separated, case sensitive)",
         "type": "text",
-        "default": "LivingColors 5"
+        "default": "Light 1, Light 2"
+    },
+    {
+        "id": "HUE_GROUPS_3",
+        "label": "Name of the groups to trigger in room 3 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "Group 1, Group 2"
     },
     {
         "id": "HUE_ACTION_PLAYING_3",
@@ -571,7 +657,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Turn Off"
     },
@@ -587,7 +675,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Dim"
     },
@@ -603,7 +693,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Nothing"
     },
@@ -767,7 +859,13 @@
         "id": "HUE_LIGHTS_4",
         "label": "Name of the lights to trigger in room 4 (comma separated, case sensitive)",
         "type": "text",
-        "default": "LivingColors 6"
+        "default": "Light 1, Light 2"
+    },
+    {
+        "id": "HUE_GROUPS_4",
+        "label": "Name of the groups to trigger in room 4 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "Group 1, Group 2"
     },
     {
         "id": "HUE_ACTION_PLAYING_4",
@@ -780,7 +878,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Turn Off"
     },
@@ -796,7 +896,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Dim"
     },
@@ -812,7 +914,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Nothing"
     },
@@ -976,7 +1080,13 @@
         "id": "HUE_LIGHTS_5",
         "label": "Name of the lights to trigger in room 5 (comma separated, case sensitive)",
         "type": "text",
-        "default": "LivingColors 7, LivingColors 8, LivingColors 9"
+        "default": "Light 1, Light 2"
+    },
+    {
+        "id": "HUE_GROUPS_5",
+        "label": "Name of the groups to trigger in room 5 (comma separated, case sensitive)",
+        "type": "text",
+        "default": "Group 1, Group 2"
     },
     {
         "id": "HUE_ACTION_PLAYING_5",
@@ -989,7 +1099,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Turn Off"
     },
@@ -1005,7 +1117,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Dim"
     },
@@ -1021,7 +1135,9 @@
           "Turn On",
           "Preset 1",
           "Preset 2",
-          "Preset 3"
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
         ],
     "default": "Nothing"
     },

@@ -210,20 +210,20 @@ def ValidatePrefs():
 		Log("Please update your Hue preferences and try again")
 	if auth is True:
 		Log("Hue username is registered... Starting!")
-		converter = Converter()
-		hue = Hue()
-		CompileRooms()
-		hue.get_hue_light_groups()
-		InitiateCurrentStatus()
-		plex = Plex()
-		Log("Classes initiated")
-		if "thread_websocket" in str(threading.enumerate()):
-			Log("Closing daemon...")
-			ws.close()
-		if not "thread_websocket" in str(threading.enumerate()):
-			Log("Starting daemon...")
-			threading.Thread(target=run_websocket_watcher,name='thread_websocket').start()
-		Log(threading.enumerate())
+	converter = Converter()
+	hue = Hue()
+	CompileRooms()
+	hue.get_hue_light_groups()
+	InitiateCurrentStatus()
+	plex = Plex()
+	Log("Classes initiated")
+	if "thread_websocket" in str(threading.enumerate()):
+		Log("Closing daemon...")
+		ws.close()
+	if not "thread_websocket" in str(threading.enumerate()):
+		Log("Starting daemon...")
+		threading.Thread(target=run_websocket_watcher,name='thread_websocket').start()
+	Log(threading.enumerate())
 	return MainMenu(header=NAME)
 
 ####################################################################################################
@@ -284,6 +284,16 @@ class Hue:
 		Log("Bridge found: " + str(B))
 
 	def get_hue_light_groups(self):
+		Log("-Getting available groups")
+		groups = B.groups
+		Log("Available groups: " +str(groups))
+		Log("Configured groups: " + str(ReturnAllGroups()))
+		Log("Configured color groups: " + str(ReturnColorGroups()))
+		Log("Configured lux groups: " + str(ReturnLuxGroups()))
+		Log("Configured on/off groups: " + str(ReturnOnOffGroups()))
+		#########################
+		#########################
+		#########################
 		Log("-Getting available lights")
 		lights = B.lights
 		Log("Available lights: " +str(lights))
@@ -293,6 +303,28 @@ class Hue:
 		Log("Configured on/off lights: " + str(ReturnOnOffLights()))
 
 	def get_hue_light_initial_state(self, client_name, room):
+		dico = {}
+		for group in ReturnColorGroupsFromClient(client_name, room):
+			line = {}
+			line['on'] = B.get_group(group, 'on')
+			line['bri'] = B.get_group(group, 'bri')
+			line['hue'] = B.get_group(group, 'hue')
+			line['sat'] = B.get_group(group, 'sat')
+			dico[group] = line
+		for group in ReturnLuxGroupsFromClient(client_name, room):
+			line = {}
+			line['on'] = B.get_group(group, 'on')
+			line['bri'] = B.get_group(group, 'bri')
+			dico[group] = line
+		for group in ReturnOnOffGroupsFromClient(client_name, room):
+			line = {}
+			line['on'] = B.get_group(group, 'on')
+			dico[group] = line
+		GROUPS_INITIAL_STATE[client_name + str(room)] = dico
+		Log(dico)
+		#########################
+		#########################
+		#########################
 		dico = {}
 		for light in ReturnColorLightsFromClient(client_name, room):
 			line = {}
@@ -314,6 +346,31 @@ class Hue:
 		Log(dico)
 
 	def update_light_state(self, powered, brightness, client_name, room, transitiontime, xy):
+		Log("--Updating groups")
+		command =  {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
+		command_lux = {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
+		command_onoff = {'on' : powered, 'transitiontime' : transitiontime}
+		if not xy == None:
+			Log("---triggering preset action")
+			command =  {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime, 'xy': xy}
+		if ReturnFromClient(client_name, "randomize", room) is True and powered is True and xy == None:
+			Log("---Randomizing")
+			hue = random.randint(0,65535)
+			sat = random.randint(100,254)
+			command =  {'on' : powered, 'bri' : brightness, 'sat': sat, 'hue': hue, 'transitiontime' : transitiontime}
+		if powered is False:
+			command =  {'on' : powered, 'transitiontime' : transitiontime}
+			command_lux = {'on' : powered, 'transitiontime' : transitiontime}
+		groups = ReturnColorGroupsFromClient(client_name, room)
+		luxgroups = ReturnLuxGroupsFromClient(client_name, room)
+		onoffgroups = ReturnOnOffGroupsFromClient(client_name, room)
+		Log("updating color groups: %s"% B.set_group(groups, command))
+		Log("updating lux groups: %s"% B.set_group(luxgroups, command_lux))
+		Log("updating on/off groups: %s"% B.set_group(onoffgroups, command_onoff))
+		#########################
+		#########################
+		#########################
+		#########################
 		Log("--Updating lights")
 		command =  {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
 		command_lux = {'on' : powered, 'bri' : brightness, 'transitiontime' : transitiontime}
@@ -337,6 +394,28 @@ class Hue:
 		Log("updating on/off lights: %s"% B.set_light(onofflights, command_onoff))
 
 	def reset_lights_state(self, client_name, room, transitiontime):
+		Log("--Reset groups")
+		groups = GROUPS_INITIAL_STATE[client_name + str(room)]
+		for group in groups:
+			try:
+				groups[group]['bri']
+			except:
+				Log("%s is a on/off group, triggering on parameter"% group)
+				command = {'on': groups[group]['on']}
+			else:
+				try:
+					groups[group]['hue']
+					groups[group]['sat']
+				except:
+					Log("%s is a lux group, triggering on, bri parameters"% group)
+					command = {'on': groups[group]['on'], 'bri': groups[group]['bri'], 'transitiontime': transitiontime}
+				else:
+					Log("%s is a color group, triggering bri, on, sat, hue parameters"% group)
+					command = {'on': groups[group]['on'], 'bri': groups[group]['bri'], 'hue':groups[group]['hue'], 'sat': groups[group]['sat'], 'transitiontime': transitiontime}
+			Log(B.set_group(group, command))
+		#########################
+		#########################
+		#########################
 		Log("--Reset lights")
 		lights = LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)]
 		for light in lights:
@@ -415,20 +494,47 @@ def CompileRooms():
 			colorlights = []
 			for light in lights:
 				try:
-					B.get_light(light, 'bri')
+					B.get_light(light, 'on')
 				except:
-					onofflights.append(light)
-				else:			
+					Log("Skipping this light")
+				else:
 					try:
-						B.get_light(light, 'sat')
-						B.get_light(light, 'hue')
+						B.get_light(light, 'bri')
 					except:
-						luxlights.append(light)
-					else:
-						colorlights.append(light)
+						onofflights.append(light)
+					else:			
+						try:
+							B.get_light(light, 'sat')
+							B.get_light(light, 'hue')
+						except:
+							luxlights.append(light)
+						else:
+							colorlights.append(light)
+
 			room['lights'] = colorlights
 			room['luxlights'] = luxlights
 			room['onofflights'] = onofflights
+			groups = [x for x in pattern.split(Prefs['HUE_GROUPS_' + str(j)]) if x]
+			onoffgroups = []
+			luxgroups = []
+			colorgroups = []
+			for group in groups:
+				if (not B.get_group(group, 'lights') == None):
+					try:
+						B.get_group(group, 'bri')
+					except:
+						onoffgroups.append(group)
+					else:			
+						try:
+							B.get_group(group, 'sat')
+							B.get_group(group, 'hue')
+						except:
+							luxgroups.append(group)
+						else:
+							colorgroups.append(group)
+			room['groups'] = colorgroups
+			room['luxgroups'] = luxgroups
+			room['onoffgroups'] = onoffgroups
 			room['users'] = [x for x in pattern.split(Prefs['PLEX_AUTHORIZED_USERS_' + str(j)]) if x]
 			room['playing'] = Prefs['HUE_ACTION_PLAYING_' + str(j)]
 			room['paused'] = Prefs['HUE_ACTION_PAUSED_' + str(j)]
@@ -456,10 +562,11 @@ def CompileRooms():
 
 def InitiateCurrentStatus():
 	Log("Initiating current status, lights initial states and durations for active rooms")
-	global CURRENT_STATUS, CURRENT_MEDIA, LIGHT_GROUPS_INITIAL_STATE, DURATIONS
+	global CURRENT_STATUS, CURRENT_MEDIA, GROUPS_INITIAL_STATE, LIGHT_GROUPS_INITIAL_STATE, DURATIONS
 	CURRENT_STATUS = {}
 	CURRENT_MEDIA = {}
 	DURATIONS = {}
+	GROUPS_INITIAL_STATE = {}
 	LIGHT_GROUPS_INITIAL_STATE = {}
 	for room, client_name in ReturnClients().iteritems():
 		CURRENT_STATUS[client_name + str(room)] = ''
@@ -477,6 +584,96 @@ def ReturnClients():
 	for clients in rooms:
 		client_list[clients['room']] = clients['client']
 	return client_list
+
+####################################################################################################
+# Return all color groups attached a specific client
+####################################################################################################
+
+def ReturnColorGroupsFromClient(client_name, room):
+	groups_list = []
+	for clients in rooms:
+		if clients['client'] == client_name and clients['room'] == room:
+			for group in clients['groups']:
+				groups_list.append(group)
+	return groups_list
+
+####################################################################################################
+# Return all Lux groups attached a specific client
+####################################################################################################
+
+def ReturnLuxGroupsFromClient(client_name, room):
+	groups_list = []
+	for clients in rooms:
+		if clients['client'] == client_name and clients['room'] == room:
+			for group in clients['luxgroups']:
+				groups_list.append(group)
+	return groups_list
+
+####################################################################################################
+# Return all On Off groups attached a specific client
+####################################################################################################
+
+def ReturnOnOffGroupsFromClient(client_name, room):
+	groups_list = []
+	for clients in rooms:
+		if clients['client'] == client_name and clients['room'] == room:
+			for group in clients['onoffgroups']:
+				groups_list.append(group)
+	return groups_list
+
+####################################################################################################
+# Return the list of all groups
+####################################################################################################
+
+def ReturnAllGroups():
+	groups_list = []
+	for clients in rooms:
+		for group in clients['groups']:
+			if not group in groups_list:
+				groups_list.append(group)
+		for luxgroup in clients['luxgroups']:
+			if not luxgroup in groups_list:
+				groups_list.append(luxgroup)
+		for onoffgroup in clients['onoffgroups']:
+			if not onoffgroup in groups_list:
+				groups_list.append(onoffgroup)
+	return groups_list
+
+####################################################################################################
+# Return the list of all color groups
+####################################################################################################
+
+def ReturnColorGroups():
+	groups_list = []
+	for clients in rooms:
+		for group in clients['groups']:
+			if not group in groups_list:
+				groups_list.append(group)
+	return groups_list
+
+####################################################################################################
+# Return the list of all lux groups
+####################################################################################################
+
+def ReturnLuxGroups():
+	groups_list = []
+	for clients in rooms:
+		for luxgroup in clients['luxgroups']:
+			if not luxgroup in groups_list:
+				groups_list.append(luxgroup)
+	return groups_list
+
+####################################################################################################
+# Return the list of all lux groups
+####################################################################################################
+
+def ReturnOnOffGroups():
+	groups_list = []
+	for clients in rooms:
+		for onoffgroup in clients['onoffgroups']:
+			if not onoffgroup in groups_list:
+				groups_list.append(onoffgroup)
+	return groups_list
 
 ####################################################################################################
 # Return all color lights attached a specific client
@@ -775,7 +972,13 @@ def choose_action(state, client_name, room, transitiontime):
 		set_light_preset(client_name, room, transitiontime, "2")
 		pass
 	elif ReturnFromClient(client_name, state, room) == "Preset 3":
-		set_light_preset(client_name, room, transitiontime, "2")
+		set_light_preset(client_name, room, transitiontime, "3")
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Preset 4":
+		set_light_preset(client_name, room, transitiontime, "4")
+		pass
+	elif ReturnFromClient(client_name, state, room) == "Preset 5":
+		set_light_preset(client_name, room, transitiontime, "5")
 		pass
 	elif ReturnFromClient(client_name, state, room) == "Nothing":
 		Log("Doing nothing")
