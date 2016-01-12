@@ -306,20 +306,29 @@ class Hue:
 		dico = {}
 		for group in ReturnColorGroupsFromClient(client_name, room):
 			line = {}
-			line['on'] = B.get_group(group, 'on')
-			line['bri'] = B.get_group(group, 'bri')
-			line['hue'] = B.get_group(group, 'hue')
-			line['sat'] = B.get_group(group, 'sat')
-			dico[group] = line
+			try:
+				line['on'] = B.get_group(group, 'on')
+				line['bri'] = B.get_group(group, 'bri')
+				line['hue'] = B.get_group(group, 'hue')
+				line['sat'] = B.get_group(group, 'sat')
+				dico[group] = line
+			except:
+				Log("Something went wrong")
 		for group in ReturnLuxGroupsFromClient(client_name, room):
 			line = {}
-			line['on'] = B.get_group(group, 'on')
-			line['bri'] = B.get_group(group, 'bri')
-			dico[group] = line
+			try:
+				line['on'] = B.get_group(group, 'on')
+				line['bri'] = B.get_group(group, 'bri')
+				dico[group] = line
+			except:
+				Log("Something went wrong")
 		for group in ReturnOnOffGroupsFromClient(client_name, room):
 			line = {}
-			line['on'] = B.get_group(group, 'on')
-			dico[group] = line
+			try:
+				line['on'] = B.get_group(group, 'on')
+				dico[group] = line
+			except:
+				Log("Something went wrong")
 		GROUPS_INITIAL_STATE[client_name + str(room)] = dico
 		Log(dico)
 		#########################
@@ -328,20 +337,29 @@ class Hue:
 		dico = {}
 		for light in ReturnColorLightsFromClient(client_name, room):
 			line = {}
-			line['on'] = B.get_light(light, 'on')
-			line['bri'] = B.get_light(light, 'bri')
-			line['hue'] = B.get_light(light, 'hue')
-			line['sat'] = B.get_light(light, 'sat')
-			dico[light] = line
+			try:
+				line['on'] = B.get_light(light, 'on')
+				line['bri'] = B.get_light(light, 'bri')
+				line['hue'] = B.get_light(light, 'hue')
+				line['sat'] = B.get_light(light, 'sat')
+				dico[light] = line
+			except:
+				Log("Something went wrong")
 		for light in ReturnLuxLightsFromClient(client_name, room):
 			line = {}
-			line['on'] = B.get_light(light, 'on')
-			line['bri'] = B.get_light(light, 'bri')
-			dico[light] = line
+			try:
+				line['on'] = B.get_light(light, 'on')
+				line['bri'] = B.get_light(light, 'bri')
+				dico[light] = line
+			except:
+				Log("Something went wrong")
 		for light in ReturnOnOffLightsFromClient(client_name, room):
 			line = {}
-			line['on'] = B.get_light(light, 'on')
-			dico[light] = line
+			try:
+				line['on'] = B.get_light(light, 'on')
+				dico[lightsht] = line
+			except:
+				Log("Something went wrong")
 		LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)] = dico
 		Log(dico)
 
@@ -364,9 +382,12 @@ class Hue:
 		groups = ReturnColorGroupsFromClient(client_name, room)
 		luxgroups = ReturnLuxGroupsFromClient(client_name, room)
 		onoffgroups = ReturnOnOffGroupsFromClient(client_name, room)
-		Log("updating color groups: %s"% B.set_group(groups, command))
-		Log("updating lux groups: %s"% B.set_group(luxgroups, command_lux))
-		Log("updating on/off groups: %s"% B.set_group(onoffgroups, command_onoff))
+		try:
+			Log("updating color groups: %s"% B.set_group(groups, command))
+			Log("updating lux groups: %s"% B.set_group(luxgroups, command_lux))
+			Log("updating on/off groups: %s"% B.set_group(onoffgroups, command_onoff))
+		except:
+				Log("Something went wrong")
 		#########################
 		#########################
 		#########################
@@ -389,9 +410,12 @@ class Hue:
 		lights = ReturnColorLightsFromClient(client_name, room)
 		luxlights = ReturnLuxLightsFromClient(client_name, room)
 		onofflights = ReturnOnOffLightsFromClient(client_name, room)
-		Log("updating color lights: %s"% B.set_light(lights, command))
-		Log("updating lux lights: %s"% B.set_light(luxlights, command_lux))
-		Log("updating on/off lights: %s"% B.set_light(onofflights, command_onoff))
+		try:
+			Log("updating color lights: %s"% B.set_light(lights, command))
+			Log("updating lux lights: %s"% B.set_light(luxlights, command_lux))
+			Log("updating on/off lights: %s"% B.set_light(onofflights, command_onoff))
+		except:
+				Log("Something went wrong")
 
 	def reset_lights_state(self, client_name, room, transitiontime):
 		Log("--Reset groups")
@@ -412,7 +436,10 @@ class Hue:
 				else:
 					Log("%s is a color group, triggering bri, on, sat, hue parameters"% group)
 					command = {'on': groups[group]['on'], 'bri': groups[group]['bri'], 'hue':groups[group]['hue'], 'sat': groups[group]['sat'], 'transitiontime': transitiontime}
-			Log(B.set_group(group, command))
+			try:
+				Log(B.set_group(group, command))
+			except:
+				Log("Something went wrong")
 		#########################
 		#########################
 		#########################
@@ -434,7 +461,10 @@ class Hue:
 				else:
 					Log("%s is a color light, triggering bri, on, sat, hue parameters"% light)
 					command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'hue':lights[light]['hue'], 'sat': lights[light]['sat'], 'transitiontime': transitiontime}
-			Log(B.set_light(light, command))
+			try:
+				Log(B.set_light(light, command))
+			except:
+				Log("Something went wrong")
 
 ####################################################################################################
 # Plex Commands
