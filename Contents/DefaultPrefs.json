@@ -396,6 +396,88 @@
     "default": "Disabled"
     },
     {
+        "id": "HUE_ONLY_ON_1",
+        "label": "Only trigger lights that are on when the movie starts in room 1",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_ON_1",
+        "label": "When the client is turned ON in room 1:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_ON_1",
+        "label": "Transition time the client is turned ON in room 1:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "PLEX_OFF_1",
+        "label": "When the client is turned OFF in room 1:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_OFF_1",
+        "label": "Transition time the client is turned OFF in room 1:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
         "id": "HUE_ROOM_2",
         "label": "Activate HelloHue in room 2",
         "type": "bool",
@@ -615,6 +697,88 @@
           "2 hours"
         ],
     "default": "Disabled"
+    },
+    {
+        "id": "HUE_ONLY_ON_2",
+        "label": "Only trigger lights that are on when the movie starts in room 2",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_ON_2",
+        "label": "When the client is turned ON in room 2:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_ON_2",
+        "label": "Transition time the client is turned ON in room 2:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "PLEX_OFF_2",
+        "label": "When the client is turned OFF in room 2:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_OFF_2",
+        "label": "Transition time the client is turned OFF in room 2:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
     },
     {
         "id": "HUE_ROOM_3",
@@ -838,6 +1002,88 @@
     "default": "Disabled"
     },
     {
+        "id": "HUE_ONLY_ON_3",
+        "label": "Only trigger lights that are on when the movie starts in room 3",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_ON_3",
+        "label": "When the client is turned ON in room 3:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_ON_3",
+        "label": "Transition time the client is turned ON in room 3:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "PLEX_OFF_3",
+        "label": "When the client is turned OFF in room 3:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_OFF_3",
+        "label": "Transition time the client is turned OFF in room 3:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
         "id": "HUE_ROOM_4",
         "label": "Activate HelloHue in room 4",
         "type": "bool",
@@ -1059,6 +1305,88 @@
     "default": "Disabled"
     },
     {
+        "id": "HUE_ONLY_ON_4",
+        "label": "Only trigger lights that are on when the movie starts in room 4",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_ON_4",
+        "label": "When the client is turned ON in room 4:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_ON_4",
+        "label": "Transition time the client is turned ON in room 4:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "PLEX_OFF_4",
+        "label": "When the client is turned OFF in room 4:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_OFF_4",
+        "label": "Transition time the client is turned OFF in room 4:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
         "id": "HUE_ROOM_5",
         "label": "Activate HelloHue in room 5",
         "type": "bool",
@@ -1278,6 +1606,88 @@
           "2 hours"
         ],
     "default": "Disabled"
+    },
+    {
+        "id": "HUE_ONLY_ON_5",
+        "label": "Only trigger lights that are on when the movie starts in room 5",
+        "type": "bool",
+        "default": "false"
+    },
+    {
+        "id": "PLEX_ON_5",
+        "label": "When the client is turned ON in room 5:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_ON_5",
+        "label": "Transition time the client is turned ON in room 5:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
+    },
+    {
+        "id": "PLEX_OFF_5",
+        "label": "When the client is turned OFF in room 5:",
+        "type": "enum",
+        "values": [
+          "Nothing",
+          "Dim",
+          "Turn Off",
+          "Turn On",
+          "Preset 1",
+          "Preset 2",
+          "Preset 3",
+          "Preset 4",
+          "Preset 5"
+        ],
+    "default": "Nothing"
+    },
+    {
+        "id": "PLEX_TRANSITION_OFF_5",
+        "label": "Transition time the client is turned OFF in room 5:",
+        "type": "enum",
+        "values": [
+          "0 ms",
+          "400 ms",
+          "1 sec",
+          "2 secs",
+          "3 secs",
+          "5 secs",
+          "10 secs",
+          "15 secs",
+          "30 secs",
+          "45 secs",
+          "1 min",
+          "2 mins",
+          "5 mins"
+        ],
+    "default": "400 ms"
     }
 ]
 

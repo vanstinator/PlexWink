@@ -203,7 +203,7 @@ def DisableHelloHueCallback():
 ####################################################################################################
 @route(PREFIX + '/ValidatePrefs')
 def ValidatePrefs():
-	global auth, plex, hue, converter
+	global auth, plex, hue, converter, active_clients, firstrun
 	Log('Validating Prefs')
 	auth = HueCheck().check_username()
 	if auth is False:
@@ -216,13 +216,20 @@ def ValidatePrefs():
 	hue.get_hue_light_groups()
 	InitiateCurrentStatus()
 	plex = Plex()
+	active_clients = []
 	Log("Classes initiated")
 	if "thread_websocket" in str(threading.enumerate()):
 		Log("Closing daemon...")
 		ws.close()
 	if not "thread_websocket" in str(threading.enumerate()):
-		Log("Starting daemon...")
+		Log("Starting websocket daemon...")
 		threading.Thread(target=run_websocket_watcher,name='thread_websocket').start()
+	if "thread_clients" in str(threading.enumerate()):
+		Log("Setting firstrun to True")
+		firstrun = True
+	if not "thread_clients" in str(threading.enumerate()):
+		Log("Starting clients daemon...")
+		threading.Thread(target=watch_clients,name='thread_clients').start()
 	Log(threading.enumerate())
 	return MainMenu(header=NAME)
 
@@ -330,6 +337,7 @@ class Hue:
 			except:
 				Log("Something went wrong")
 		GROUPS_INITIAL_STATE[client_name + str(room)] = dico
+		Log("Lamp initial state...")
 		Log(dico)
 		#########################
 		#########################
@@ -361,6 +369,7 @@ class Hue:
 			except:
 				Log("Something went wrong")
 		LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)] = dico
+		Log("Group initial state...")
 		Log(dico)
 
 	def update_light_state(self, powered, brightness, client_name, room, transitiontime, xy):
@@ -383,11 +392,41 @@ class Hue:
 		luxgroups = ReturnLuxGroupsFromClient(client_name, room)
 		onoffgroups = ReturnOnOffGroupsFromClient(client_name, room)
 		try:
-			Log("updating color groups: %s"% B.set_group(groups, command))
-			Log("updating lux groups: %s"% B.set_group(luxgroups, command_lux))
-			Log("updating on/off groups: %s"% B.set_group(onoffgroups, command_onoff))
+			Log("initial color group state: %s"% GROUPS_INITIAL_STATE[client_name + str(room)])
+			for group in GROUPS_INITIAL_STATE[client_name + str(room)]:
+				if ReturnFromClient(client_name, "only_on", room) is True and GROUPS_INITIAL_STATE[client_name + str(room)][group]["on"] is False:
+					Log("Removing group %s"%group)
+					if group in groups:
+						groups.remove(group)
+					if group in luxgroups:
+						luxgroups.remove(group)
+					if group in onoffgroups:
+						onoffgroups.remove(group)
+				else:
+					Log("only_on is set to false")
 		except:
-				Log("Something went wrong")
+			Log("Error getting group initial state")
+		try:
+			if groups:
+				Log("updating color groups: %s"% B.set_group(groups, command))
+			else:
+				Log("No colorgroups to trigger")
+		except:
+			Log("Something went wrong with color groups")
+		try:
+			if luxgroups:
+				Log("updating lux groups: %s"% B.set_group(luxgroups, command_lux))
+			else:
+				Log("No luxgroup to trigger")
+		except:
+			Log("Something went wrong with lux groups")
+		try:
+			if onoffgroups:
+				Log("updating on/off groups: %s"% B.set_group(onoffgroups, command_onoff))
+			else:
+				Log("No onoffgroups to trigger")
+		except:
+			Log("Something went wrong with on/off groups")
 		#########################
 		#########################
 		#########################
@@ -411,60 +450,94 @@ class Hue:
 		luxlights = ReturnLuxLightsFromClient(client_name, room)
 		onofflights = ReturnOnOffLightsFromClient(client_name, room)
 		try:
-			Log("updating color lights: %s"% B.set_light(lights, command))
-			Log("updating lux lights: %s"% B.set_light(luxlights, command_lux))
-			Log("updating on/off lights: %s"% B.set_light(onofflights, command_onoff))
+			Log("initial lights state: %s"% LIGHT_GROUPS_INITIAL_STATE)
+			for light in LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)]:
+				if ReturnFromClient(client_name, "only_on", room) is True and LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)][light]["on"] is False:
+					Log("Removing light %s"%light)
+					if light in lights:
+						lights.remove(light)
+					if light in luxlights:
+						luxlights.remove(light)
+					if light in onofflights:
+						onofflights.remove(light)
+				else:
+					Log("only_on is set to false")
 		except:
-				Log("Something went wrong")
+			Log("Error getting group initial state")
+		try:
+			if lights:
+				Log("updating color lights: %s"% B.set_light(lights, command))
+			else:
+				Log("No colorlight to trigger")
+		except:
+			Log("Something went wrong with color lights")
+		try:
+			if luxlights:
+				Log("updating lux lights: %s"% B.set_light(luxlights, command_lux))
+			else:
+				Log("No luxlight to trigger")
+		except:
+			Log("Something went wrong with lux lights")
+		try:
+			if onofflights:
+				Log("updating on/off lights: %s"% B.set_light(onofflights, command_onoff))
+			else:
+				Log("No onofflight to trigger")
+		except:
+			Log("Something went wrong with on/off lights")
 
 	def reset_lights_state(self, client_name, room, transitiontime):
 		Log("--Reset groups")
 		groups = GROUPS_INITIAL_STATE[client_name + str(room)]
+
+		colorgroups = ReturnColorGroupsFromClient(client_name, room)
+		luxgroups = ReturnLuxGroupsFromClient(client_name, room)
+		onoffgroups = ReturnOnOffGroupsFromClient(client_name, room)
+
 		for group in groups:
-			try:
-				groups[group]['bri']
-			except:
+			if group in colorgroups:
+				Log("%s is a color group, triggering bri, on, sat, hue parameters"% group)
+				command = {'on': groups[group]['on'], 'bri': groups[group]['bri'], 'hue':groups[group]['hue'], 'sat': groups[group]['sat'], 'transitiontime': transitiontime}
+			if group in luxgroups:
+				Log("%s is a lux group, triggering on, bri parameters"% group)
+				command = {'on': groups[group]['on'], 'bri': groups[group]['bri'], 'transitiontime': transitiontime}
+			if group in onoffgroups:
 				Log("%s is a on/off group, triggering on parameter"% group)
 				command = {'on': groups[group]['on']}
-			else:
-				try:
-					groups[group]['hue']
-					groups[group]['sat']
-				except:
-					Log("%s is a lux group, triggering on, bri parameters"% group)
-					command = {'on': groups[group]['on'], 'bri': groups[group]['bri'], 'transitiontime': transitiontime}
-				else:
-					Log("%s is a color group, triggering bri, on, sat, hue parameters"% group)
-					command = {'on': groups[group]['on'], 'bri': groups[group]['bri'], 'hue':groups[group]['hue'], 'sat': groups[group]['sat'], 'transitiontime': transitiontime}
 			try:
-				Log(B.set_group(group, command))
+				if ReturnFromClient(client_name, "only_on", room) is True and GROUPS_INITIAL_STATE[client_name + str(room)][group]["on"] is False:
+					Log("Not triggering group %s because only_on is set to true and group was off"%group)
+				else:
+					Log(B.set_group(group, command))
 			except:
-				Log("Something went wrong")
+				Log("Something went wrong while resetting group %s"%group)
 		#########################
 		#########################
 		#########################
 		Log("--Reset lights")
 		lights = LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)]
+
+		colorlights = ReturnColorLightsFromClient(client_name, room)
+		luxlights = ReturnLuxLightsFromClient(client_name, room)
+		onofflights = ReturnOnOffLightsFromClient(client_name, room)
+
 		for light in lights:
-			try:
-				lights[light]['bri']
-			except:
+			if light in colorlights:
+				Log("%s is a color light, triggering bri, on, sat, hue parameters"% light)
+				command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'hue':lights[light]['hue'], 'sat': lights[light]['sat'], 'transitiontime': transitiontime}
+			if light in luxlights:
+				Log("%s is a lux light, triggering on, bri parameters"% light)
+				command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'transitiontime': transitiontime}
+			if light in onofflights:
 				Log("%s is a on/off light, triggering on parameter"% light)
 				command = {'on': lights[light]['on']}
-			else:
-				try:
-					lights[light]['hue']
-					lights[light]['sat']
-				except:
-					Log("%s is a lux light, triggering on, bri parameters"% light)
-					command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'transitiontime': transitiontime}
-				else:
-					Log("%s is a color light, triggering bri, on, sat, hue parameters"% light)
-					command = {'on': lights[light]['on'], 'bri': lights[light]['bri'], 'hue':lights[light]['hue'], 'sat': lights[light]['sat'], 'transitiontime': transitiontime}
 			try:
-				Log(B.set_light(light, command))
+				if ReturnFromClient(client_name, "only_on", room) is True and LIGHT_GROUPS_INITIAL_STATE[client_name + str(room)][light]["on"] is False:
+					Log("Not triggering light %s because only_on is set to true and light was off"%light)
+				else:
+					Log(B.set_light(light, command))
 			except:
-				Log("Something went wrong")
+				Log("Something went wrong while resetting light %s"%light)
 
 ####################################################################################################
 # Plex Commands
@@ -502,6 +575,11 @@ class Plex:
 
 	def get_plex_status(self):
 		r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/status/sessions?X-Plex-Token=' + ACCESS_TOKEN, headers=HEADERS)
+		e = ElementTree.fromstring(r.text.encode('utf-8'))
+		return e
+
+	def get_plex_clients(self):
+		r = requests.get('http://' + Prefs['PLEX_ADDRESS'] + '/clients?X-Plex-Token=' + ACCESS_TOKEN, headers=HEADERS)
 		e = ElementTree.fromstring(r.text.encode('utf-8'))
 		return e
 
@@ -573,10 +651,15 @@ def CompileRooms():
 			room['transition_paused'] = Prefs['HUE_TRANSITION_PAUSED_' + str(j)]
 			room['transition_resumed'] = Prefs['HUE_TRANSITION_RESUMED_' + str(j)]
 			room['transition_stopped'] = Prefs['HUE_TRANSITION_STOPPED_' + str(j)]
+			room['transition_on'] = Prefs['PLEX_TRANSITION_ON_' + str(j)]
+			room['transition_off'] = Prefs['PLEX_TRANSITION_OFF_' + str(j)]
 			room['dim'] = Prefs['HUE_DIM_' + str(j)]
 			room['randomize'] = Prefs['HUE_RANDOMIZE_' + str(j)]
 			room['dark'] = Prefs['HUE_DARK_' + str(j)]
 			room['min_duration'] = Prefs['PLEX_DURATION_' + str(j)]
+			room['only_on'] = Prefs['HUE_ONLY_ON_' + str(j)]
+			room['turned_on'] = Prefs['PLEX_ON_' + str(j)]
+			room['turned_off'] = Prefs['PLEX_OFF_' + str(j)]
 			room['room'] = j
 			rooms.append(room)
 			Log("Adding room %s to rooms .." %j)
@@ -638,6 +721,13 @@ def ReturnLuxGroupsFromClient(client_name, room):
 			for group in clients['luxgroups']:
 				groups_list.append(group)
 	return groups_list
+
+def ReturnRoomFromClient(client_name):
+	rooms_list = []
+	for clients in rooms:
+		if clients['client'] == client_name:
+			rooms_list.append(clients['room'])
+	return rooms_list
 
 ####################################################################################################
 # Return all On Off groups attached a specific client
@@ -1079,3 +1169,36 @@ def dim_lights(client_name, room, transitiontime):
 	dim_value = ReturnFromClient(client_name, "dim", room)
 	hue.update_light_state(powered=True, brightness=int(float(dim_value)), client_name=client_name, room=room, transitiontime=transitiontime, xy=None)
 	pass
+
+def watch_clients():
+	global firstrun
+	firstrun = True
+	while True:
+		plex_status = plex.get_plex_clients()
+		now_active = []
+		for item in plex_status.findall('Server'):
+			now_active.append(item.get('name'))
+			if firstrun is True:
+				active_clients.append(item.get('name'))
+		#Log("now_active: %s"%now_active)
+		#Log("active_clients: %s"%active_clients)
+		#Log("firstrun: %s"%firstrun)
+		if firstrun is False:
+			for client in now_active:
+				if not client in active_clients:
+					Log(ReturnRoomFromClient(client))
+					Log("%s detected, doing something"%client)
+					for roooms in ReturnRoomFromClient(client):
+						choose_action("turned_on", client, roooms, get_transition_time(ReturnFromClient(client, "transition_on", roooms)))
+					active_clients.append(client)
+			for client in active_clients:
+				if not client in now_active:
+					Log(ReturnRoomFromClient(client))
+					Log("%s went away, doing something"%client)
+					for roooms in ReturnRoomFromClient(client):
+						choose_action("turned_off", client, roooms, get_transition_time(ReturnFromClient(client, "transition_off", roooms)))
+					active_clients.remove(client)
+		if firstrun is True:
+			Log("Setting firstrun to False")
+			firstrun = False
+		sleep(1)
